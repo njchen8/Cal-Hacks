@@ -4,10 +4,14 @@ const DEFAULT_BACKEND_URL = "http://localhost:8000";
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const body = await request.json();
+    const keyword = typeof body?.keyword === "string" ? body.keyword.trim() : "";
+    const limit =
+      typeof body?.limit === "number" && Number.isFinite(body.limit) ? Math.max(1, Math.floor(body.limit)) : undefined;
+    const refresh = body?.refresh !== undefined ? Boolean(body.refresh) : true;
 
-    if (typeof text !== "string" || !text.trim()) {
-      return NextResponse.json({ error: "The 'text' field is required." }, { status: 400 });
+    if (!keyword) {
+      return NextResponse.json({ error: "The 'keyword' field is required." }, { status: 400 });
     }
 
     const backendUrl = process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_URL;
@@ -16,7 +20,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ keyword, limit, refresh }),
       cache: "no-store",
     });
 

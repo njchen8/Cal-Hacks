@@ -46,3 +46,19 @@ python main.py analyze --limit 100 --json
 ```
 
 Analyzed tweets are stored in `data/tweets.db` with per-tweet primary sentiment scores and bucketed secondary emotion signals.
+
+## API Server
+
+Launch the FastAPI server to expose an HTTP endpoint that mirrors the CLI workflow:
+
+```powershell
+uvicorn app.api:app --host 0.0.0.0 --port 8000
+```
+
+Endpoint summary:
+
+- `POST /analyze` — body `{ "keyword": "iphone", "limit": 100?, "refresh": true }`
+	- Scrapes and analyzes tweets when `refresh` is true (default) then returns aggregated primary sentiment and supporting signals.
+- `GET /healthz` — simple readiness probe.
+
+The response includes `primary`/`signals` payloads plus metadata describing how many tweets were scraped, analyzed, and included in the aggregate.

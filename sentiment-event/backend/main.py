@@ -10,6 +10,7 @@ from typing import Any, Dict
 from app import settings
 from app.database import init_db
 from app.pipeline import analyze_pending, scrape, scrape_and_analyze
+from app.summary import summarize_keyword
 
 
 def _configure_parser() -> argparse.ArgumentParser:
@@ -74,11 +75,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run":
-        stored = scrape(args.keyword, limit=args.limit)
+        stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
+        summary, sample_size, _, _ = summarize_keyword(args.keyword, limit=args.limit)
+        primary = summary["primary"]
+        print(f"Stored {stored} tweets and analyzed {analyzed} tweets for '{args.keyword}'.")
         print(
-            f"Stored {stored} tweets for '{args.keyword}'. "
-            "Run the 'analyze' command later if you want sentiment scores."
+            "Primary sentiment — "
+            f"Positive: {primary['positive'] * 100:.1f}% | "
+            f"Neutral: {primary['neutral'] * 100:.1f}% | "
+            f"Negative: {primary['negative'] * 100:.1f}% | "
+            f"Dominant label: {primary['label']} (confidence {primary['confidence'] * 100:.1f}%)"
         )
+        print(f"Summary calculated from {sample_size} tweets with stored sentiment scores.")
         return 0
 
     parser.print_help()

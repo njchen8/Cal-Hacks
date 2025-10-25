@@ -13,7 +13,7 @@ from .scraper import scrape_and_persist
 from .sentiment import get_analyzer
 
 
-def analyze_pending(limit: Optional[int] = None) -> int:
+def analyze_pending(limit: Optional[int] = None, keyword: Optional[str] = None) -> int:
     """Analyze tweets without sentiment and persist results.
 
     Returns the number of tweets updated.
@@ -24,6 +24,8 @@ def analyze_pending(limit: Optional[int] = None) -> int:
 
     with get_session() as session:
         stmt = select(Tweet).where(Tweet.sentiment.is_(None)).order_by(Tweet.created_at.desc())
+        if keyword:
+            stmt = stmt.where(Tweet.keyword == keyword)
         if limit:
             stmt = stmt.limit(limit)
 
@@ -42,5 +44,5 @@ def scrape(keyword: str, limit: Optional[int] = None) -> int:
 def scrape_and_analyze(keyword: str, limit: Optional[int] = None) -> tuple[int, int]:
     """Scrape tweets and immediately analyze the new content."""
     stored = scrape(keyword, limit=limit)
-    analyzed = analyze_pending()
+    analyzed = analyze_pending(keyword=keyword)
     return stored, analyzed

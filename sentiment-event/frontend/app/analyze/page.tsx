@@ -4,19 +4,19 @@ import { FormEvent, useState } from "react";
 import SentimentSummary from "@/components/SentimentSummary";
 import type { SentimentResponse, SentimentApiError } from "@/types/sentiment";
 
-const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
+const examplePrompt = `Example keyword: "iphone"`;
 
 export default function AnalyzePage() {
-  const [text, setText] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [result, setResult] = useState<SentimentResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const input = text.trim();
+    const input = keyword.trim();
     if (!input) {
-      setError("Please describe a product, feature, or campaign to analyze.");
+      setError("Please enter a keyword to analyze.");
       setResult(null);
       return;
     }
@@ -28,7 +28,7 @@ export default function AnalyzePage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input }),
+        body: JSON.stringify({ keyword: input }),
       });
 
       const payload = (await response.json()) as SentimentResponse | SentimentApiError;
@@ -55,27 +55,27 @@ export default function AnalyzePage() {
           <h1 className="section-heading fade-up">Usage guide & live analyzer</h1>
           <div className="instructions fade-up delay-1">
             <p>
-              1. Make sure the Python backend is running with an endpoint that accepts <code>POST /analyze</code> and
-              returns the sentiment payload described in <code>backend/app/sentiment.py</code>.
+              1. Start the backend server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
             </p>
             <p>
-              2. Set the <code>BACKEND_API_URL</code> environment variable for this Next.js app so the proxy knows where to send requests.
+              2. Set <code>BACKEND_API_URL</code> for this Next.js project (defaults to <code>http://localhost:8000</code>).
             </p>
             <p>
-              3. Describe a product launch, feature update, or customer conversation in the text area below, then submit to see headline sentiment and supporting emotions.
+              3. Enter a keyword below. The backend scrapes fresh tweets, analyzes sentiment, and returns the aggregated scores.
             </p>
             <p>{examplePrompt}</p>
           </div>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="product-input">What are we analyzing?</label>
-          <textarea
-            id="product-input"
-            name="product"
-            placeholder="Summarize the product moment you want to measure, like a feature rollout or launch reaction..."
-            value={text}
-            onChange={(event) => setText(event.target.value)}
+          <label htmlFor="keyword-input">Keyword</label>
+          <input
+            id="keyword-input"
+            name="keyword"
+            type="text"
+            placeholder="iphone, airpods, tesla, ..."
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
             disabled={isLoading}
           />
           <div className="hero-actions fade-up delay-2">
@@ -86,7 +86,7 @@ export default function AnalyzePage() {
               type="button"
               className="button-secondary"
               onClick={() => {
-                setText("");
+                setKeyword("");
                 setResult(null);
                 setError(null);
               }}
@@ -98,6 +98,15 @@ export default function AnalyzePage() {
         </form>
 
         {error && <div className="status-banner error fade-up">{error}</div>}
+        {result?.meta && !error && (
+          <div className="status-banner success fade-up" style={{ animationDelay: "0.1s" }}>
+            {result.meta.sampleSize > 0 || result.meta.totalTweets > 0 ? (
+              <>Scraped {result.meta.newlyScraped} new tweets, analyzed {result.meta.newlyAnalyzed} tweets, using {result.meta.sampleSize} stored samples.</>
+            ) : (
+              <>No tweets with stored sentiment yet. Try a different keyword or check the backend logs.</>
+            )}
+          </div>
+        )}
         {result && !error && (
           <div className="fade-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="section-heading">Sentiment breakdown</h2>

@@ -32,20 +32,32 @@ const metricTone: Record<string, "positive" | "neutral" | "negative"> = {
 };
 
 function formatPercent(value: number) {
-  return `${(value * 100).toFixed(1)}%`;
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return `${(safeValue * 100).toFixed(1)}%`;
 }
 
 export default function SentimentSummary({ result }: SentimentSummaryProps) {
   const primary = result.primary;
+  const meta = result.meta;
+  const positivePercent = formatPercent(primary.positive);
+  const neutralPercent = formatPercent(primary.neutral);
+  const negativePercent = formatPercent(primary.negative);
+  const dominantLabel = primary.label.charAt(0).toUpperCase() + primary.label.slice(1);
+  const confidencePercent = formatPercent(primary.confidence);
 
   return (
     <div className="result-grid">
       <article className="result-card">
         <h4>Primary Sentiment</h4>
+        {meta && (
+          <p className="section-subtitle">
+            {`Analyzed ${meta.sampleSize} tweets for "${meta.keyword}". Positive ${positivePercent}, Neutral ${neutralPercent}, Negative ${negativePercent}. Dominant tone: ${dominantLabel} (confidence ${confidencePercent}).`}
+          </p>
+        )}
         <div className="metric-row">
           <div className="metric-label">
             <span>Dominant Label</span>
-            <span>{primary.label.charAt(0).toUpperCase() + primary.label.slice(1)}</span>
+            <span>{dominantLabel}</span>
           </div>
         </div>
         {metricOrder.map((key) => {
