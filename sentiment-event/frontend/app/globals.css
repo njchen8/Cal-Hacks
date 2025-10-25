@@ -71,6 +71,7 @@
   padding: 0;
   margin: 0;
   scrollbar-width: none;
+  cursor: url('/leafCursor.png') 12 12, auto;
 }
 
 *::-webkit-scrollbar {
