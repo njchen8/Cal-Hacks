@@ -85,12 +85,18 @@ export default function SentimentSummary({ result }: SentimentSummaryProps) {
               <p className="section-subtitle">No signals crossed the probability threshold.</p>
             ) : (
               <div className="signal-group">
-                {pairs.map(([label, value]) => (
-                  <div key={label} className={`signal-chip ${polarity}`}>
-                    <span>{label.charAt(0).toUpperCase() + label.slice(1)}</span>
-                    <span>{formatPercent(value)}</span>
-                  </div>
-                ))}
+                {pairs.map(([label, rawValue]) => {
+                  if (typeof rawValue !== "number") {
+                    return null;
+                  }
+
+                  return (
+                    <div key={label} className={`signal-chip ${polarity}`}>
+                      <span>{label.charAt(0).toUpperCase() + label.slice(1)}</span>
+                      <span>{formatPercent(rawValue)}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </article>
