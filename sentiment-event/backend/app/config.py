@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
-import os
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,11 @@ class Settings:
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "cal hacks")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
+    twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
+    twitter_app_user_agent: str = os.getenv(
+        "TWITTER_APP_USER_AGENT",
+        "SentimentEventBackend/1.0",
+    )
 
     @property
     def sqlite_path(self) -> Path:

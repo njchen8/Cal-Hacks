@@ -31,6 +31,14 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+export TWITTER_BEARER_TOKEN="AAAAAAAA..."
+python main.py run "cal hacks"
+```
+
+On Windows PowerShell use:
+
+```powershell
+$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."
 python main.py run "cal hacks"
 ```
 
