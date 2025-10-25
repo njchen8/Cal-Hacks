@@ -21,7 +21,7 @@ def _load_environment() -> None:
 
     for env_path in candidate_paths:
         if env_path.exists():
-            load_dotenv(env_path, override=False)
+            load_dotenv(env_path, override=True)
 
 
 _load_environment()
@@ -40,10 +40,13 @@ class Settings:
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
-    twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
-    twitter_app_user_agent: str = os.getenv(
-        "TWITTER_APP_USER_AGENT",
-        "SentimentEventBackend/1.0",
+    twitter_cookie_header: Optional[str] = os.getenv("TWITTER_COOKIE_HEADER")
+    twitter_cookie_file: Optional[str] = os.getenv("TWITTER_COOKIE_FILE")
+    twitter_username: Optional[str] = os.getenv("TWITTER_USERNAME")
+    twitter_password: Optional[str] = os.getenv("TWITTER_PASSWORD")
+    twitter_user_agent: str = os.getenv(
+        "TWITTER_USER_AGENT",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     )
 
     @property
@@ -52,6 +55,13 @@ class Settings:
         if self.database_url.startswith("sqlite:///"):
             return Path(self.database_url.replace("sqlite:///", ""))
         raise ValueError("DATABASE_URL does not reference a local sqlite file")
+
+    @property
+    def resolved_cookie_path(self) -> Path:
+        """Return the path where twitter cookies should be stored."""
+        if self.twitter_cookie_file:
+            return Path(self.twitter_cookie_file).expanduser().resolve()
+        return self.data_dir / "twitter_cookies.json"
 
 
 settings = Settings()

@@ -74,8 +74,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run":
-        stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
-        print(f"Stored {stored} tweets and analyzed {analyzed} tweets for '{args.keyword}'.")
+        stored = scrape(args.keyword, limit=args.limit)
+        print(
+            f"Stored {stored} tweets for '{args.keyword}'. "
+            "Run the 'analyze' command later if you want sentiment scores."
+        )
         return 0
 
     parser.print_help()

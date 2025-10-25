@@ -11,29 +11,24 @@ python -m venv .venv
 pip install -r requirements.txt
 # Optional: duplicate the template env file for local secrets
 Copy-Item ..\..\.env.example ..\.env -ErrorAction SilentlyContinue
-# Set TWITTER_BEARER_TOKEN directly or edit ..\..\.env
-$env:TWITTER_BEARER_TOKEN = "YOUR_BEARER_TOKEN"
+# Provide credentials once so Twikit can create cookies
+$env:TWITTER_USERNAME = "your_username_or_email"
+$env:TWITTER_PASSWORD = "your_password"
 ```
 
 ## Twitter Authentication
 
-The scraper now calls the official X (Twitter) v2 Search Recent endpoint and requires an app bearer token. Create an app in the [X Developer Portal](https://developer.twitter.com/en/portal/dashboard), enable Elevated access, and grab the **App-only OAuth2 Bearer Token**.
+The scraper now uses [Twikit](https://github.com/d60/twikit) to perform authenticated searches. On the first run you must supply `TWITTER_USERNAME` and `TWITTER_PASSWORD` (username/email + password) so Twikit can log in and save session cookies to `backend/data/twitter_cookies.json`. Subsequent runs reuse the saved cookies, so you can remove the credentials from your environment after the initial login.
 
-Set the token in your shell (or copy `.env.example` to `.env`) before running commands:
+If you already have a cookie file or header string, you can set `TWITTER_COOKIE_FILE` or `TWITTER_COOKIE_HEADER` instead of providing credentials.
 
-```powershell
-$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."
-```
-
-Optionally customise the reported user agent:
+Optional customise the reported user agent:
 
 ```powershell
-$env:TWITTER_APP_USER_AGENT = "MySentimentBot/0.1"
+$env:TWITTER_USER_AGENT = "Mozilla/5.0 ..."
 ```
 
-Treat these credentials as secrets—do not check them into source control.
-
-If you maintain a `.env` file, set `TWITTER_BEARER_TOKEN=` (and optionally `TWITTER_APP_USER_AGENT=`) within it instead of exporting variables every session; the backend automatically reads `.env` files at startup.
+Treat these credentials as secrets—do not check them into source control. The backend automatically reads `.env` files at startup.
 
 ## Usage
 
