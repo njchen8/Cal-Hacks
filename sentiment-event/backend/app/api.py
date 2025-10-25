@@ -63,7 +63,11 @@ def analyze_keyword(payload: AnalyzeRequestModel) -> AnalyzeResponseModel:
 
     stored = analyzed = 0
     if payload.refresh:
-        stored, analyzed = scrape_and_analyze(keyword, limit=payload.limit)
+        try:
+            stored, analyzed = scrape_and_analyze(keyword, limit=payload.limit)
+        except RuntimeError as exc:
+            # Swallow transient scraping issues (e.g., search returning 404) and fall back to stored data.
+            stored = analyzed = 0
 
     summary, sample_size, total_tweets, latest_tweet_at = summarize_keyword(keyword, limit=payload.limit)
 

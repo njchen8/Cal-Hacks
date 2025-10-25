@@ -75,7 +75,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run":
-        stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
+        try:
+            stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
+        except RuntimeError as exc:
+            stored = analyzed = 0
         summary, sample_size, _, _ = summarize_keyword(args.keyword, limit=args.limit)
         primary = summary["primary"]
         print(f"Stored {stored} tweets and analyzed {analyzed} tweets for '{args.keyword}'.")

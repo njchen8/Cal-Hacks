@@ -149,9 +149,9 @@ def scrape(keyword: str, limit: int | None = None) -> List[Tweet]:
                     cursor=cursor,
                 )
             )
-        except NotFound:
-            break
         except TwitterException as exc:
+            if isinstance(exc, NotFound):
+                break
             raise RuntimeError(f"Twikit search failed: {exc}") from exc
 
         if not results:
