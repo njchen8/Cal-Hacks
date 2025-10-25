@@ -7,6 +7,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
+
+
+def _load_environment() -> None:
+    """Load environment variables from .env files, if present."""
+
+    project_root = Path(__file__).resolve().parents[2]
+    candidate_paths = (
+        project_root / ".env",
+        project_root / "backend" / ".env",
+    )
+
+    for env_path in candidate_paths:
+        if env_path.exists():
+            load_dotenv(env_path, override=False)
+
+
+_load_environment()
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -18,7 +37,7 @@ class Settings:
         "DATABASE_URL",
         f"sqlite:///{(base_dir / 'data' / 'tweets.db').as_posix()}",
     )
-    default_keyword: str = os.getenv("SCRAPE_KEYWORD", "cal hacks")
+    default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
     twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
