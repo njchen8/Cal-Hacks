@@ -15,6 +15,7 @@ from app.database import init_db
 from app.pipeline import analyze_pending, scrape, scrape_and_analyze
 # Reddit-specific imports (alternative source)
 from app.pipeline import scrape_reddit, scrape_and_analyze_reddit
+from app.summary import summarize_keyword
 
 
 def _configure_parser() -> argparse.ArgumentParser:
@@ -95,8 +96,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run":
-        stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
+        try:
+            stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
+        except RuntimeError as exc:
+            stored = analyzed = 0
+        summary, sample_size, _, _ = summarize_keyword(args.keyword, limit=args.limit)
+        primary = summary["primary"]
         print(f"Stored {stored} tweets and analyzed {analyzed} tweets for '{args.keyword}'.")
+        print(
+            "Primary sentiment — "
+            f"Positive: {primary['positive'] * 100:.1f}% | "
+            f"Neutral: {primary['neutral'] * 100:.1f}% | "
+            f"Negative: {primary['negative'] * 100:.1f}% | "
+            f"Dominant label: {primary['label']} (confidence {primary['confidence'] * 100:.1f}%)"
+        )
+        print(f"Summary calculated from {sample_size} tweets with stored sentiment scores.")
         return 0
 
     # ============================================================================

@@ -26,7 +26,7 @@ bluberri/
 
 ## Run Backend
 
-Copy `.env.example` to `.env` and set `TWITTER_BEARER_TOKEN=...` with your X API bearer token, then:
+Copy `.env.example` to `.env` and provide either your Twitter credentials (`TWITTER_USERNAME` and `TWITTER_PASSWORD`) for the first login or a full cookie header via `TWITTER_COOKIE_HEADER`. Twikit will save authenticated cookies to `backend/data/twitter_cookies.json` for reuse.
 
 ```bash
 cd backend
@@ -34,6 +34,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python main.py run "your search term"
+uvicorn app.api:app --host 0.0.0.0 --port 8000
 ```
 
 On Windows PowerShell:
@@ -44,6 +45,7 @@ python -m venv .venv
 \.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python main.py run "your search term"
+uvicorn app.api:app --host 0.0.0.0 --port 8000
 ```
 
 ## Run Frontend
@@ -53,4 +55,7 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Set `BACKEND_API_URL` in the frontend environment (or `.env.local`) to the FastAPI URL. The proxy defaults to `http://localhost:8000` for local development.
+
 

@@ -28,7 +28,7 @@ export default function AnalyzePage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input }),
+        body: JSON.stringify({ keyword: input }),
       });
 
       const payload = (await response.json()) as SentimentResponse | SentimentApiError;

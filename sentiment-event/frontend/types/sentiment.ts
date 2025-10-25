@@ -15,8 +15,18 @@ export interface SentimentSignals {
 export interface SentimentResponse {
   primary: SentimentPrimary;
   signals: SentimentSignals;
+  meta?: SentimentMeta;
 }
 
 export interface SentimentApiError {
   error: string;
+}
+
+export interface SentimentMeta {
+  keyword: string;
+  sampleSize: number;
+  totalTweets: number;
+  newlyScraped: number;
+  newlyAnalyzed: number;
+  latestTweetAt?: string | null;
 }
