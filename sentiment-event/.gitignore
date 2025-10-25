@@ -29,6 +29,7 @@ __pycache__/
 .benchmarks
 .venv/
 venv/
+.env
 
 # Local data/cache directories
 data/

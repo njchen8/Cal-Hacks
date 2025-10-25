@@ -7,7 +7,6 @@ sentiment-event/
 ├── backend/
 │   ├── app/
 │   │   ├── config.py
-│   │   ├── database.py
 │   │   ├── models.py
 │   │   ├── pipeline.py
 │   │   ├── scraper.py
@@ -27,13 +26,14 @@ sentiment-event/
 ## Run Backend
 
 ```bash
+export TWITTER_BEARER_TOKEN="AAAAAAAA..."  # or copy .env.example to .env
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 export TWITTER_BEARER_TOKEN="AAAAAAAA..."
 python main.py run "cal hacks"
-```
+$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."  # optional if .env is configured
 
 On Windows PowerShell use:
 
@@ -49,3 +49,4 @@ cd frontend
 npm install
 npm run dev
 ```
+Configuration values can be stored in a `.env` file (see `.env.example`); the backend loads this automatically at startup.
