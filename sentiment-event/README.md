@@ -7,6 +7,7 @@ sentiment-event/
 ├── backend/
 │   ├── app/
 │   │   ├── config.py
+│   │   ├── database.py
 │   │   ├── models.py
 │   │   ├── pipeline.py
 │   │   ├── scraper.py
@@ -25,21 +26,24 @@ sentiment-event/
 
 ## Run Backend
 
+Copy `.env.example` to `.env` and set `TWITTER_BEARER_TOKEN=...` with your X API bearer token, then:
+
 ```bash
-export TWITTER_BEARER_TOKEN="AAAAAAAA..."  # or copy .env.example to .env
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export TWITTER_BEARER_TOKEN="AAAAAAAA..."
-python main.py run "cal hacks"
-$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."  # optional if .env is configured
+python main.py run "your search term"
+```
 
-On Windows PowerShell use:
+On Windows PowerShell:
 
 ```powershell
-$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."
-python main.py run "cal hacks"
+cd backend
+python -m venv .venv
+\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python main.py run "your search term"
 ```
 
 ## Run Frontend

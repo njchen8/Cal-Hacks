@@ -11,7 +11,8 @@ python -m venv .venv
 pip install -r requirements.txt
 # Optional: duplicate the template env file for local secrets
 Copy-Item ..\..\.env.example ..\.env -ErrorAction SilentlyContinue
-$env:TWITTER_BEARER_TOKEN = "AAAAAAAA..."
+# Set TWITTER_BEARER_TOKEN directly or edit ..\..\.env
+$env:TWITTER_BEARER_TOKEN = "YOUR_BEARER_TOKEN"
 ```
 
 ## Twitter Authentication
@@ -39,13 +40,13 @@ If you maintain a `.env` file, set `TWITTER_BEARER_TOKEN=` (and optionally `TWIT
 Initialize the database and run scrape + analysis in a single step:
 
 ```powershell
-python main.py run "cal hacks"
+python main.py run "your search term"
 ```
 
 Other commands:
 
 ```powershell
-python main.py scrape "open ai" --limit 50
+python main.py scrape "another keyword" --limit 50
 python main.py analyze --limit 100 --json
 ```
 

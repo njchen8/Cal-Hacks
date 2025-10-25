@@ -37,7 +37,7 @@ class Settings:
         "DATABASE_URL",
         f"sqlite:///{(base_dir / 'data' / 'tweets.db').as_posix()}",
     )
-    default_keyword: str = os.getenv("SCRAPE_KEYWORD", "cal hacks")
+    default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
     twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
