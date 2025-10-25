@@ -48,6 +48,7 @@ class Settings:
         "TWITTER_USER_AGENT",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     )
+    model_cache_dir: Path = data_dir / "model_cache"
 
     @property
     def sqlite_path(self) -> Path:
@@ -66,3 +67,4 @@ class Settings:
 
 settings = Settings()
 settings.data_dir.mkdir(parents=True, exist_ok=True)
+settings.model_cache_dir.mkdir(parents=True, exist_ok=True)

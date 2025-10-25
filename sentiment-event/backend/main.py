@@ -76,20 +76,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         try:
-            stored, analyzed = scrape_and_analyze(args.keyword, limit=args.limit)
-        except RuntimeError as exc:
-            stored = analyzed = 0
-        summary, sample_size, _, _ = summarize_keyword(args.keyword, limit=args.limit)
-        primary = summary["primary"]
-        print(f"Stored {stored} tweets and analyzed {analyzed} tweets for '{args.keyword}'.")
-        print(
-            "Primary sentiment — "
-            f"Positive: {primary['positive'] * 100:.1f}% | "
-            f"Neutral: {primary['neutral'] * 100:.1f}% | "
-            f"Negative: {primary['negative'] * 100:.1f}% | "
-            f"Dominant label: {primary['label']} (confidence {primary['confidence'] * 100:.1f}%)"
-        )
-        print(f"Summary calculated from {sample_size} tweets with stored sentiment scores.")
+            scrape_and_analyze(args.keyword, limit=args.limit)
+        except RuntimeError:
+            pass
+        _, sample_size, total_tweets, _ = summarize_keyword(args.keyword, limit=args.limit)
+        print(f"{total_tweets} tweets currently stored for '{args.keyword}'.")
+        print(f"Most recent summary used {sample_size} tweets that already have sentiment scores.")
         return 0
 
     parser.print_help()
