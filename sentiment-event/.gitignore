@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.temp/
+.env
+.env.*
+*.log
+pnpm-lock.yaml
+coverage/
+data/

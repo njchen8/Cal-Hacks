@@ -1,0 +1,10 @@
+[
+  {
+    "id": "mitigation-low-sentiment",
+    "type": "avgScoreThreshold",
+    "threshold": -0.25,
+    "minVolume": 10,
+    "agentName": "mitigation-agent",
+    "message": "Average sentiment dropped below threshold"
+  }
+]

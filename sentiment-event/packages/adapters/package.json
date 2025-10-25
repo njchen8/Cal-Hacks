@@ -1,0 +1,32 @@
+{
+  "name": "@pkg/adapters",
+  "version": "0.1.0",
+  "private": false,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.22.0",
+    "@pkg/schemas": "workspace:*",
+    "@pkg/shared": "workspace:*",
+    "node-html-parser": "^6.1.11",
+    "rss-parser": "^3.12.0",
+    "undici": "^6.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.3",
+    "@types/node": "^20.11.30"
+  }
+}
