@@ -1,6 +1,6 @@
 # Sentiment Event Project
 
-This repository currently contains the Python backend responsible for collecting tweets and running sentiment analysis. The backend stores scraped tweets in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.).
+This repository contains the Python backend responsible for collecting tweets and running sentiment analysis, plus a modern Next.js frontend that surfaces the insights. The backend stores scraped tweets in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.), while the frontend presents project context and a policy analysis workspace.
 
 ```
 sentiment-event/
@@ -16,7 +16,28 @@ sentiment-event/
 │   ├── main.py
 │   ├── README.md
 │   └── requirements.txt
-└── frontend/  # Reserved for a future client application
+└── frontend/
+	├── app/
+	├── components/
+	├── types/
+	├── package.json
+	└── README.md
 ```
 
-See `backend/README.md` for setup and usage instructions.
+## Run Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py run "cal hacks"
+```
+
+## Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
