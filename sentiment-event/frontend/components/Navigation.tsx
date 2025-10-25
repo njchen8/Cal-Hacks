@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const links = [
   { href: "/", label: "Overview" },
@@ -16,6 +17,7 @@ export default function Navigation() {
     <header className="navbar">
       <div className="navbar-inner">
         <Link href="/" className="brand">
+          <Image src="/logo.png" alt="Bluberri logo" width={48} height={48} style={{ marginRight: '0.5rem' }} />
           Bluberri
         </Link>
         <nav className="nav-links">
