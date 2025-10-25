@@ -125,4 +125,3 @@ def summarize_keyword(keyword: str, limit: Optional[int] = None) -> Tuple[Dict, 
     latest_timestamp = rows[0].created_at if rows else None
 
     return summary, sample_size, int(total_count or 0), latest_timestamp
-*** End Patch
