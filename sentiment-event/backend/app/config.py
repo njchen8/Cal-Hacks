@@ -40,10 +40,20 @@ class Settings:
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
+
+    # Twitter API credentials (original implementation)
     twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
     twitter_app_user_agent: str = os.getenv(
         "TWITTER_APP_USER_AGENT",
         "SentimentEventBackend/1.0",
+    )
+
+    # Reddit API credentials (alternative source)
+    reddit_client_id: Optional[str] = os.getenv("REDDIT_CLIENT_ID")
+    reddit_client_secret: Optional[str] = os.getenv("REDDIT_CLIENT_SECRET")
+    reddit_user_agent: str = os.getenv(
+        "REDDIT_USER_AGENT",
+        "SentimentEventBackend/1.0 (by /u/YourUsername)",
     )
 
     @property

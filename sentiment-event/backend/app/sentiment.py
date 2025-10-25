@@ -57,7 +57,8 @@ class SentimentAnalyzer:
                 "signals": {"positive": {}, "negative": {}, "neutral": {}},
             }
 
-        sentiment_scores = self._sentiment_pipeline(text, return_all_scores=True)[0]
+        # Use truncation parameter to handle long texts (max 512 tokens for RoBERTa)
+        sentiment_scores = self._sentiment_pipeline(text, return_all_scores=True, truncation=True, max_length=512)[0]
         built = {score["label"].lower(): score["score"] for score in sentiment_scores}
         positive = float(built.get("positive", 0.0))
         negative = float(built.get("negative", 0.0))

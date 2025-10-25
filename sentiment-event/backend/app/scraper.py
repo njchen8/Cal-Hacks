@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Iterable, List
+import time
 
 import requests
 from sqlalchemy import select
@@ -117,6 +118,9 @@ def scrape(keyword: str, limit: int | None = None) -> List[Tweet]:
         next_token = payload.get("meta", {}).get("next_token")
         if not next_token:
             break
+
+        # Add delay to avoid rate limiting (2 seconds between requests)
+        time.sleep(2)
 
     return tweets
 
