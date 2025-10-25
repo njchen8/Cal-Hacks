@@ -3,6 +3,7 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import OrbitalBackground from "@/components/OrbitalBackground";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -12,9 +13,9 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Sentiment Event Insights",
+  title: "Bluberri Product Pulse",
   description:
-    "Understand how communities feel about policies, infrastructure, and public events through sentiment and emotion analytics.",
+    "Understand how customers across the globe feel about your products and feature launches with sentiment and emotion analytics.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={nunito.variable}>
       <body>
         <div className="app-shell">
+          <OrbitalBackground />
           <Navigation />
           <main className="content-area">{children}</main>
           <Footer />

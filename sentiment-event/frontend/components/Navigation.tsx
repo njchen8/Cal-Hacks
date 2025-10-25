@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,7 +7,7 @@ const links = [
   { href: "/", label: "Overview" },
   { href: "/about", label: "About" },
   { href: "/analyze", label: "Analyze" },
-];
+] as const;
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -16,7 +16,7 @@ export default function Navigation() {
     <header className="navbar">
       <div className="navbar-inner">
         <Link href="/" className="brand">
-          Sentiment Event
+          Bluberri
         </Link>
         <nav className="nav-links">
           {links.map((link) => (

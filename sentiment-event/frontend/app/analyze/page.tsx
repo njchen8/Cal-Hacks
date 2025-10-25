@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 import { FormEvent, useState } from "react";
 import SentimentSummary from "@/components/SentimentSummary";
 import type { SentimentResponse, SentimentApiError } from "@/types/sentiment";
 
-const examplePrompt = `For example: "The new urban rail expansion seems overdue. Riders feel hopeful but worry about delays."`;
+const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
 
 export default function AnalyzePage() {
   const [text, setText] = useState("");
@@ -16,7 +16,7 @@ export default function AnalyzePage() {
     event.preventDefault();
     const input = text.trim();
     if (!input) {
-      setError("Please describe a policy, bill, or event to analyze.");
+      setError("Please describe a product, feature, or campaign to analyze.");
       setResult(null);
       return;
     }
@@ -52,35 +52,33 @@ export default function AnalyzePage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading">Usage guide & live analyzer</h1>
-          <div className="instructions">
+          <h1 className="section-heading fade-up">Usage guide & live analyzer</h1>
+          <div className="instructions fade-up delay-1">
             <p>
               1. Make sure the Python backend is running with an endpoint that accepts <code>POST /analyze</code> and
               returns the sentiment payload described in <code>backend/app/sentiment.py</code>.
             </p>
             <p>
-              2. Set the <code>BACKEND_API_URL</code> environment variable for this Next.js app so the proxy knows where
-              to send requests.
+              2. Set the <code>BACKEND_API_URL</code> environment variable for this Next.js app so the proxy knows where to send requests.
             </p>
             <p>
-              3. Describe a policy, infrastructure proposal, or public event in the text area below, then submit to see
-              headline sentiment and supporting emotions.
+              3. Describe a product launch, feature update, or customer conversation in the text area below, then submit to see headline sentiment and supporting emotions.
             </p>
             <p>{examplePrompt}</p>
           </div>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="policy-input">What are we analyzing?</label>
+          <label htmlFor="product-input">What are we analyzing?</label>
           <textarea
-            id="policy-input"
-            name="policy"
-            placeholder="Summarize the policy, bill, or event impact you want to measure..."
+            id="product-input"
+            name="product"
+            placeholder="Summarize the product moment you want to measure, like a feature rollout or launch reaction..."
             value={text}
             onChange={(event) => setText(event.target.value)}
             disabled={isLoading}
           />
-          <div className="hero-actions">
+          <div className="hero-actions fade-up delay-2">
             <button type="submit" className="button-primary" disabled={isLoading}>
               {isLoading ? "Analyzing..." : "Run sentiment"}
             </button>
@@ -99,13 +97,12 @@ export default function AnalyzePage() {
           </div>
         </form>
 
-        {error && <div className="status-banner error">{error}</div>}
+        {error && <div className="status-banner error fade-up">{error}</div>}
         {result && !error && (
-          <div>
+          <div className="fade-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="section-heading">Sentiment breakdown</h2>
             <p className="section-subtitle">
-              Primary sentiment probabilities are paired with supporting emotion cues. Use both to understand how people
-              feel and why the tone might shift.
+              Primary sentiment probabilities are paired with supporting emotion cues. Use both to understand how people feel and why the tone might shift.
             </p>
             <SentimentSummary result={result} />
           </div>

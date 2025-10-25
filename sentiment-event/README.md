@@ -1,9 +1,9 @@
-# Sentiment Event Project
+# Bluberri
 
-This repository contains the Python backend responsible for collecting tweets and running sentiment analysis, plus a modern Next.js frontend that surfaces the insights. The backend stores scraped tweets in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.), while the frontend presents project context and a policy analysis workspace.
+Bluberri pairs a Python backend that collects tweets and runs sentiment analysis with a modern Next.js frontend that surfaces launch-ready insights. The backend stores scraped tweets in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.), while the frontend frames those signals inside a blueberry-blue, pastel-purple, and white experience using lightweight CSS-based motion accents.
 
 ```
-sentiment-event/
+bluberri/
 ├── backend/
 │   ├── app/
 │   │   ├── config.py
@@ -31,7 +31,13 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export TWITTER_BEARER_TOKEN="AAAAAAAA..."
+python main.py run "cal hacks"
+```
+
+On Windows Command Prompt (`cmd.exe`):
+
+```cmd
+set TWITTER_BEARER_TOKEN=AAAAAAAA...
 python main.py run "cal hacks"
 ```
 
@@ -49,3 +55,5 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The frontend relies on custom CSS transitions and keyframes to deliver lightweight hover and entrance animations that match the Bluberri palette. Update `frontend/app/globals.css` if you want to adjust the blueberry blue / pastel purple / white theme or tweak animation timings.
