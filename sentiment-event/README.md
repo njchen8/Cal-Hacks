@@ -33,18 +33,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-<<<<<<< HEAD
-python main.py run "cal hacks"
-```
-
-On Windows Command Prompt (`cmd.exe`):
-
-```cmd
-set TWITTER_BEARER_TOKEN=AAAAAAAA...
-python main.py run "cal hacks"
-=======
 python main.py run "your search term"
->>>>>>> 349d0eea3e6a805be7ef4df292b9ad8ea4c824a2
 ```
 
 On Windows PowerShell:
@@ -64,9 +53,4 @@ cd frontend
 npm install
 npm run dev
 ```
-<<<<<<< HEAD
 
-The frontend relies on custom CSS transitions and keyframes to deliver lightweight hover and entrance animations that match the Bluberri palette. Update `frontend/app/globals.css` if you want to adjust the blueberry blue / pastel purple / white theme or tweak animation timings.
-=======
-Configuration values can be stored in a `.env` file (see `.env.example`); the backend loads this automatically at startup.
->>>>>>> 349d0eea3e6a805be7ef4df292b9ad8ea4c824a2
