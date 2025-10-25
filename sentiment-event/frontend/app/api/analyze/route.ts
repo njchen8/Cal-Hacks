@@ -14,8 +14,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "The 'keyword' field is required." }, { status: 400 });
     }
 
-    const backendUrl = process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_URL;
-    const target = `${backendUrl.replace(/\/$/, "")}/analyze`;
+    const envBackend = process.env.BACKEND_API_URL?.trim() || DEFAULT_BACKEND_URL;
+    let backendUrl = envBackend.replace(/\/$/, "");
+    if (backendUrl.startsWith("http://0.0.0.0")) {
+      backendUrl = backendUrl.replace("0.0.0.0", "127.0.0.1");
+    } else if (backendUrl.startsWith("https://0.0.0.0")) {
+      backendUrl = backendUrl.replace("0.0.0.0", "127.0.0.1");
+    }
+
+    const target = `${backendUrl}/analyze`;
 
     const response = await fetch(target, {
       method: "POST",
