@@ -40,6 +40,7 @@ build/
 # Data and reports (temporary outputs)
 sentiment-event/backend/data/
 sentiment-event/backend/sentiment_report.txt
+sentiment-event/backend/sentiment_report.csv
 
 # Misc
 *.log
