@@ -115,8 +115,9 @@ def scrape(keyword: str, limit: int | None = None, subreddit: str = "all") -> Li
 
             remaining -= 1
 
-            # Add small delay to respect rate limits (Reddit allows 100/min)
-            time.sleep(0.6)  # ~100 requests per minute
+            # Add delay to respect rate limits and avoid blocking
+            # Reddit free tier: be conservative to avoid IP bans
+            time.sleep(2.0)  # ~30 requests per minute (safer than 100/min)
 
     except Exception as e:
         raise RuntimeError(f"Reddit API error: {str(e)}")
