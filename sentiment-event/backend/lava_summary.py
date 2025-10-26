@@ -149,7 +149,7 @@ class GeminiSummarizer:
         }
 
     def build_analysis_prompt(self, stats: Dict[str, Any], posts: List[Dict[str, Any]]) -> str:
-        """Build a comprehensive prompt for Lava Gateway to analyze.
+        """Build a comprehensive prompt for Gemini to analyze.
 
         Args:
             stats: Sentiment statistics dictionary

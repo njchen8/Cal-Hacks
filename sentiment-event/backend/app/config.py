@@ -71,6 +71,7 @@ class Settings:
     # Lava Gateway API credentials (for LLM-powered sentiment summaries)
     lava_api_key: Optional[str] = os.getenv("LAVA_API_KEY")
     lava_base_url: str = os.getenv("LAVA_BASE_URL", "https://api.lavagateway.com/v1")
+    gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
 
     # Facebook API credentials (alternative source)
     facebook_access_token: Optional[str] = os.getenv("FACEBOOK_ACCESS_TOKEN")

@@ -166,15 +166,11 @@ def _encode_event(payload: dict) -> bytes:
     return (json.dumps(payload) + "\n").encode("utf-8")
 
 
-def _lava_env_ready() -> bool:
-    return bool(
-        settings.lava_api_key
-        and os.getenv("LAVA_CONNECTION_SECRET")
-        and os.getenv("LAVA_PRODUCT_SECRET")
-    )
+def _gemini_env_ready() -> bool:
+    return bool(settings.gemini_api_key)
 
 
-def _generate_lava_summary(
+def _generate_gemini_summary(
     keyword: str,
     force_refresh: bool,
     existing_csv: Optional[Path] = None,
@@ -193,21 +189,21 @@ def _generate_lava_summary(
         if csv_path is None:
             return None, None, None, log_lines
 
-    if not _lava_env_ready():
-        log_lines.append("[lava] Skipping summary generation (Lava credentials not configured).")
+    if not _gemini_env_ready():
+        log_lines.append("[gemini] Skipping summary generation (Gemini credentials not configured).")
         return None, None, csv_path, log_lines
 
     if not force_refresh and summary_path.exists():
         try:
             if csv_path.exists() and summary_path.stat().st_mtime >= csv_path.stat().st_mtime:
-                log_lines.append(f"[lava] Reusing existing summary at {summary_path}")
+                log_lines.append(f"[gemini] Reusing existing summary at {summary_path}")
                 summary_text = summary_path.read_text(encoding="utf-8").strip()
                 return summary_text, summary_path, csv_path, log_lines
         except OSError:
             pass
 
     try:
-        summarizer = GeminiSummarizer()
+        summarizer = GeminiSummarizer(api_key=settings.gemini_api_key)
     except ValueError:
         log_lines.append("[gemini] Gemini API key is missing; summary skipped.")
         return None, None, csv_path, log_lines
@@ -323,51 +319,51 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
             _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
         csv_path: Optional[Path] = None
-        if total_content > 0:
+        if total_content > 0 or needs_refresh:
             yield _encode_event({"type": "log", "message": "Generating combined sentiment CSV..."})
             csv_path, csv_logs = _ensure_csv_report(keyword, needs_refresh)
             for entry in csv_logs:
                 yield _encode_event({"type": "log", "message": entry})
 
-        lava_summary_text: Optional[str] = None
-        lava_summary_path: Optional[Path] = None
-        if total_content > 0 and _lava_env_ready():
-            yield _encode_event({"type": "log", "message": "Preparing Lava Gateway summary..."})
+        gemini_summary_text: Optional[str] = None
+        gemini_summary_path: Optional[Path] = None
+        if csv_path and _gemini_env_ready():
+            yield _encode_event({"type": "log", "message": "Preparing Gemini summary..."})
             try:
-                lava_summary_text, summary_path, _, lava_logs = _generate_lava_summary(
+                gemini_summary_text, summary_path, _, gemini_logs = _generate_gemini_summary(
                     keyword,
                     needs_refresh,
                     csv_path,
                 )
-                for entry in lava_logs:
+                for entry in gemini_logs:
                     yield _encode_event({"type": "log", "message": entry})
                 if summary_path:
-                    lava_summary_path = summary_path
+                    gemini_summary_path = summary_path
                     yield _encode_event(
                         {
                             "type": "log",
-                            "message": f"[lava] Summary saved to: {summary_path}",
+                            "message": f"[gemini] Summary saved to: {summary_path}",
                         }
                     )
             except RuntimeError as exc:
-                yield _encode_event({"type": "log", "message": f"Lava summary failed: {exc}"})
+                yield _encode_event({"type": "log", "message": f"Gemini summary failed: {exc}"})
             except Exception as exc:  # pragma: no cover - protective catch for unexpected errors
-                yield _encode_event({"type": "log", "message": f"Lava summary failed: {exc}"})
-        elif total_content > 0:
+                yield _encode_event({"type": "log", "message": f"Gemini summary failed: {exc}"})
+        elif csv_path:
             yield _encode_event(
                 {
                     "type": "log",
-                    "message": "[lava] Skipping summary generation (Lava credentials not configured).",
+                    "message": "[gemini] Skipping summary generation (Gemini credentials not configured).",
                 }
             )
 
-        if lava_summary_text:
-            lava_message: dict[str, object] = {"text": lava_summary_text, "keyword": keyword}
+        if gemini_summary_text:
+            summary_message: dict[str, object] = {"text": gemini_summary_text, "keyword": keyword}
             if csv_path:
-                lava_message["csvPath"] = str(csv_path)
-            if lava_summary_path:
-                lava_message["summaryPath"] = str(lava_summary_path)
-            yield _encode_event({"type": "lava", "message": lava_message})
+                summary_message["csvPath"] = str(csv_path)
+            if gemini_summary_path:
+                summary_message["summaryPath"] = str(gemini_summary_path)
+            yield _encode_event({"type": "gemini", "message": summary_message})
 
         yield _encode_event(
             {

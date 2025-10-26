@@ -40,29 +40,29 @@ def analyze_pending(
         if progress_callback:
             progress_callback(0, total)
 
-    analyzer = get_analyzer(variant)
-    batch_size = max(1, settings.sentiment_batch_size)
+        analyzer = get_analyzer(variant)
+        batch_size = max(1, settings.sentiment_batch_size)
 
-    if on_ready:
-        try:
-            on_ready(total)
-        except Exception:  # pragma: no cover - defensive; logging callbacks should not break pipeline
-            pass
+        if on_ready:
+            try:
+                on_ready(total)
+            except Exception:  # pragma: no cover - defensive; logging callbacks should not break pipeline
+                pass
 
-    updated = 0
+        updated = 0
 
-    for start in range(0, total, batch_size):
-        chunk = tweets[start : start + batch_size]
-        contents = [tweet.content for tweet in chunk]
-        sentiments = analyzer.analyze_many(contents)
+        for start in range(0, total, batch_size):
+            chunk = tweets[start : start + batch_size]
+            contents = [tweet.content for tweet in chunk]
+            sentiments = analyzer.analyze_many(contents)
 
-        for tweet, sentiment in zip(chunk, sentiments):
-            tweet.sentiment = sentiment
-            updated += 1
-            if progress_callback:
-                progress_callback(updated, total)
+            for tweet, sentiment in zip(chunk, sentiments):
+                tweet.sentiment = sentiment
+                updated += 1
+                if progress_callback:
+                    progress_callback(updated, total)
 
-    return updated
+        return updated
 
 
 def scrape(keyword: str, limit: Optional[int] = None, ignore_cache: bool = False) -> ScrapeResult:

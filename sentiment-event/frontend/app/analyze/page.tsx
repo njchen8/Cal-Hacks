@@ -10,8 +10,8 @@ export default function AnalyzePage() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<StoredContentResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const [lavaSummary, setLavaSummary] = useState<string | null>(null);
-  const [lavaMetadata, setLavaMetadata] = useState<{ keyword: string; csvPath?: string; summaryPath?: string } | null>(
+  const [insightSummary, setInsightSummary] = useState<string | null>(null);
+  const [insightMetadata, setInsightMetadata] = useState<{ keyword: string; csvPath?: string; summaryPath?: string } | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -36,9 +36,9 @@ export default function AnalyzePage() {
     setActiveEngine(engine);
     setError(null);
     setLogs([]);
-  setLavaSummary(null);
+  setInsightSummary(null);
   setResult(null);
-  setLavaMetadata(null);
+  setInsightMetadata(null);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -109,19 +109,19 @@ export default function AnalyzePage() {
             updateFallbackSummary(message);
             return true;
           }
-          if (event.type === "lava") {
+          if (event.type === "lava" || event.type === "gemini") {
             if (typeof event.message === "string") {
-              setLavaSummary(event.message.trim());
+              setInsightSummary(event.message.trim());
               return true;
             }
 
             if (event.message && typeof event.message === "object") {
               const { text, keyword: kw, csvPath, summaryPath } = event.message;
               if (typeof text === "string") {
-                setLavaSummary(text.trim());
+                setInsightSummary(text.trim());
               }
               if (typeof kw === "string" || csvPath || summaryPath) {
-                setLavaMetadata({
+                setInsightMetadata({
                   keyword: typeof kw === "string" ? kw : input,
                   csvPath: typeof csvPath === "string" ? csvPath : undefined,
                   summaryPath: typeof summaryPath === "string" ? summaryPath : undefined,
@@ -295,20 +295,20 @@ export default function AnalyzePage() {
         )}
 
         {error && <div className="status-banner error fade-up">{error}</div>}
-        {lavaSummary && (
+        {insightSummary && (
           <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Lava Gateway summary
+              Gemini insight summary
             </h2>
-            <div className="lava-output">
-              {lavaMetadata && (
-                <p className="lava-meta">
-                  Keyword <strong>{lavaMetadata.keyword}</strong>
-                  {lavaMetadata.summaryPath ? ` · Summary: ${lavaMetadata.summaryPath}` : null}
-                  {lavaMetadata.csvPath ? ` · CSV: ${lavaMetadata.csvPath}` : null}
+            <div className="insight-output">
+              {insightMetadata && (
+                <p className="insight-meta">
+                  Keyword <strong>{insightMetadata.keyword}</strong>
+                  {insightMetadata.summaryPath ? ` · Summary: ${insightMetadata.summaryPath}` : null}
+                  {insightMetadata.csvPath ? ` · CSV: ${insightMetadata.csvPath}` : null}
                 </p>
               )}
-              <ReactMarkdown>{lavaSummary}</ReactMarkdown>
+              <ReactMarkdown>{insightSummary}</ReactMarkdown>
             </div>
           </div>
         )}
@@ -369,7 +369,7 @@ export default function AnalyzePage() {
           white-space: pre-wrap;
         }
 
-        .lava-output {
+        .insight-output {
           background: rgba(255, 255, 255, 0.08);
           border-radius: 12px;
           padding: 1.5rem;
@@ -379,7 +379,7 @@ export default function AnalyzePage() {
           color: var(--color-text-primary);
         }
 
-        .lava-output h2 {
+        .insight-output h2 {
           font-size: 1.5rem;
           font-weight: 700;
           margin-top: 1.5rem;
@@ -387,26 +387,32 @@ export default function AnalyzePage() {
           color: var(--color-primary);
         }
 
-        .lava-output h2:first-child {
+        .insight-output h2:first-child {
           margin-top: 0;
         }
 
-        .lava-output p {
+        .insight-output p {
           margin-bottom: 1rem;
         }
 
-        .lava-output strong {
+        .insight-output strong {
           font-weight: 700;
           color: var(--color-primary);
         }
 
-        .lava-output ul {
+        .insight-output ul {
           margin-left: 1.5rem;
           margin-bottom: 1rem;
         }
 
-        .lava-output li {
+        .insight-output li {
           margin-bottom: 0.5rem;
+        }
+
+        .insight-meta {
+          font-size: 0.85rem;
+          color: var(--color-text-secondary);
+          margin-bottom: 1rem;
         }
       `}</style>
       </section>
