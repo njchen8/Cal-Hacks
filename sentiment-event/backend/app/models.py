@@ -13,7 +13,7 @@ from .database import Base
 
 
 class Tweet(Base):
-    """Persisted tweet content."""
+    """Persisted user-generated content record."""
 
     __tablename__ = "tweets"
     __table_args__ = (

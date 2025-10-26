@@ -13,8 +13,9 @@ from typing import Any, Dict
 from app import settings
 from app.database import init_db
 from app.pipeline import analyze_pending, scrape, scrape_and_analyze
-# Reddit-specific imports (alternative source)
 from app.pipeline import scrape_reddit, scrape_and_analyze_reddit
+from app.pipeline import analyze_pending, scrape
+from app.scraper import update_export_with_sentiment
 from app.summary import summarize_keyword
 
 
@@ -22,20 +23,17 @@ def _configure_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Multi-source sentiment analysis backend (Twitter + Reddit)")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # ============================================================================
-    # TWITTER COMMANDS (Original)
-    # ============================================================================
-    scrape_parser = subparsers.add_parser("scrape", help="Scrape tweets for a keyword (Twitter)")
+    scrape_parser = subparsers.add_parser("scrape", help="Scrape user content for a keyword")
     scrape_parser.add_argument("keyword", type=str, help="Keyword or search query")
-    scrape_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of tweets to fetch")
+    scrape_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of items to fetch")
 
-    analyze_parser = subparsers.add_parser("analyze", help="Run sentiment analysis on stored tweets/posts")
-    analyze_parser.add_argument("--limit", type=int, default=None, help="Limit the number of tweets to analyze")
-    analyze_parser.add_argument("--json", action="store_true", help="Print the analyzed tweets as JSON")
+    analyze_parser = subparsers.add_parser("analyze", help="Run sentiment analysis on stored content")
+    analyze_parser.add_argument("--limit", type=int, default=None, help="Limit the number of items to analyze")
+    analyze_parser.add_argument("--json", action="store_true", help="Print the analyzed content as JSON")
 
     run_parser = subparsers.add_parser("run", help="Scrape and analyze in one step (Twitter)")
     run_parser.add_argument("keyword", type=str, help="Keyword or search query")
-    run_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of tweets to fetch")
+    run_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of items to fetch")
 
     # ============================================================================
     # REDDIT COMMANDS (Alternative source)
@@ -83,26 +81,77 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "scrape":
-        stored = scrape(args.keyword, limit=args.limit)
-        print(f"Stored {stored} new tweets for '{args.keyword}'.")
+        result = scrape(args.keyword, limit=args.limit)
+        print(result.message)
         return 0
 
     if args.command == "analyze":
         updated = analyze_pending(limit=args.limit)
-        print(f"Analyzed {updated} tweets.")
+        print(f"Analyzed {updated} content entries.")
         if args.json:
             payload = _fetch_analyzed(limit=args.limit)
             print(json.dumps(payload, indent=2))
         return 0
 
     if args.command == "run":
+        print(f"[1/5] Starting refresh for '{args.keyword}'.", flush=True)
+        scrape_result = None
         try:
-            scrape_and_analyze(args.keyword, limit=args.limit)
-        except RuntimeError:
-            pass
-        _, sample_size, total_tweets, _ = summarize_keyword(args.keyword, limit=args.limit)
-        print(f"{total_tweets} tweets currently stored for '{args.keyword}'.")
-        print(f"Most recent summary used {sample_size} tweets that already have sentiment scores.")
+            print("[2/5] Checking cached exports and scraping if required...", flush=True)
+            scrape_result = scrape(args.keyword, limit=args.limit)
+            print(f"[3/5] {scrape_result.message}", flush=True)
+
+            if scrape_result.used_cache:
+                analyzed = 0
+                print("[4/5] Skipping sentiment analysis; using cached results.", flush=True)
+            else:
+                progress_state = {"last": -1, "announced_start": False}
+
+                def _progress_callback(done: int, total: int) -> None:
+                    if total == 0:
+                        if progress_state["last"] != 0:
+                            print("[4/5] No content pending sentiment analysis.", flush=True)
+                            progress_state["last"] = 0
+                        return
+
+                    if not progress_state["announced_start"]:
+                        print(
+                            f"[4/5] Running sentiment analysis on pending content ({total} item(s))...",
+                            flush=True,
+                        )
+                        progress_state["announced_start"] = True
+
+                    segments = 20
+                    step = max(1, total // segments)
+                    if done == total or done == 0 or done % step == 0:
+                        if done != progress_state["last"]:
+                            ratio = done / total if total else 0
+                            filled = int(round(ratio * segments))
+                            filled = max(0, min(segments, filled))
+                            bar = "#" * filled + "-" * (segments - filled)
+                            print(
+                                f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
+                                flush=True,
+                            )
+                            progress_state["last"] = done
+
+                analyzed = analyze_pending(keyword=args.keyword, progress_callback=_progress_callback)
+
+                if progress_state["last"] != analyzed and analyzed > 0:
+                    _progress_callback(analyzed, analyzed)
+
+                print(f"[4/5] Analysis complete. Updated {analyzed} content entries.", flush=True)
+        except RuntimeError as exc:
+            print(f"[!] Pipeline error: {exc}", flush=True)
+
+        if scrape_result and scrape_result.export_path:
+            update_export_with_sentiment(scrape_result.export_path)
+
+        _, sample_size, total_content, latest = summarize_keyword(args.keyword, limit=args.limit)
+        if latest:
+            print(f"[5/5] Latest content entry recorded at {latest.isoformat()}.", flush=True)
+        print(f"{total_content} content entries currently stored for '{args.keyword}'.", flush=True)
+        print(f"Most recent summary used {sample_size} content entries that already have sentiment scores.", flush=True)
         return 0
 
     # ============================================================================

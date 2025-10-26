@@ -1,4 +1,4 @@
-"""Utilities for aggregating sentiment results across tweets."""
+"""Utilities for aggregating sentiment results across user-generated content."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def _empty_summary() -> Dict[str, Dict[str, Dict[str, float]]]:
 
 
 def aggregate_sentiments(sentiments: Iterable[Dict[str, Dict]]) -> Tuple[Dict, int]:
-    """Aggregate individual tweet sentiment payloads into a single summary."""
+    """Aggregate individual content sentiment payloads into a single summary."""
 
     totals = {"positive": 0.0, "negative": 0.0, "neutral": 0.0, "confidence": 0.0}
     label_counter: Counter[str] = Counter()
@@ -102,7 +102,7 @@ def aggregate_sentiments(sentiments: Iterable[Dict[str, Dict]]) -> Tuple[Dict, i
 
 
 def summarize_keyword(keyword: str, limit: Optional[int] = None) -> Tuple[Dict, int, int, Optional[datetime]]:
-    """Return aggregated sentiment data for tweets associated with a keyword."""
+    """Return aggregated sentiment data for content associated with a keyword."""
 
     keyword = keyword.strip()
     if not keyword:

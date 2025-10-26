@@ -2,10 +2,10 @@ export interface SentimentApiError {
   error: string;
 }
 
-export interface StoredTweetsResponse {
+export interface StoredContentResponse {
   keyword: string;
-  storedTweets: number;
+  storedContent: number;
   sampleSize: number;
-  latestTweetAt?: string | null;
+  latestContentAt?: string | null;
   message: string;
 }
