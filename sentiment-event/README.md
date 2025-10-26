@@ -1,6 +1,6 @@
 # Bluberri
 
-Bluberri pairs a Python backend that collects tweets and runs sentiment analysis with a modern Next.js frontend that surfaces launch-ready insights. The backend stores scraped tweets in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.), while the frontend frames those signals inside a blueberry-blue, pastel-purple, and white experience using lightweight CSS-based motion accents.
+Bluberri pairs a Python backend that collects social media posts and runs sentiment analysis with a modern Next.js frontend that surfaces launch-ready insights. The backend stores scraped posts in a local SQLite database and applies transformer-based models to score overall sentiment along with granular emotional signals (fear, desire, greed, etc.).
 
 ```
 bluberri/
