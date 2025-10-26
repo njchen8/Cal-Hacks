@@ -174,7 +174,7 @@ a {
 
 button {
   font-family: inherit;
-  cursor: pointer;
+  cursor: url('/leafCursor2-small.png') 0 0, pointer;
   background: none;
   border: none;
 }
