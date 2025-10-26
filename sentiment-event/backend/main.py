@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from typing import Any, Dict
 
 from app import settings
@@ -137,7 +138,12 @@ def main(argv: list[str] | None = None) -> int:
                     "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
                     flush=True,
                 )
-                progress_state = {"last": -1, "announced_start": False}
+                progress_state = {
+                    "last": -1,
+                    "announced_start": False,
+                    "last_emit": time.perf_counter(),
+                }
+                heartbeat_interval = 15.0
 
                 def _analyzer_ready(total: int) -> None:
                     if total <= 0:
@@ -148,10 +154,12 @@ def main(argv: list[str] | None = None) -> int:
                     )
 
                 def _progress_callback(done: int, total: int) -> None:
+                    now = time.perf_counter()
                     if total == 0:
                         if progress_state["last"] != 0:
                             print("[4/5] No content pending sentiment analysis.", flush=True)
                             progress_state["last"] = 0
+                            progress_state["last_emit"] = now
                         return
 
                     if not progress_state["announced_start"]:
@@ -160,20 +168,28 @@ def main(argv: list[str] | None = None) -> int:
                             flush=True,
                         )
                         progress_state["announced_start"] = True
+                        progress_state["last_emit"] = now
 
                     segments = 20
                     step = max(1, total // segments)
-                    if done == total or done == 0 or done % step == 0:
-                        if done != progress_state["last"]:
-                            ratio = done / total if total else 0
-                            filled = int(round(ratio * segments))
-                            filled = max(0, min(segments, filled))
-                            bar = "#" * filled + "-" * (segments - filled)
-                            print(
-                                f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
-                                flush=True,
-                            )
-                            progress_state["last"] = done
+                    emit_due_to_step = done % step == 0 or done in (0, total)
+                    early_heartbeat = done <= 5 and done != progress_state["last"]
+                    timed_heartbeat = (now - progress_state["last_emit"]) >= heartbeat_interval
+
+                    if done != progress_state["last"] and (emit_due_to_step or early_heartbeat or timed_heartbeat):
+                        ratio = done / total if total else 0
+                        filled = int(round(ratio * segments))
+                        filled = max(0, min(segments, filled))
+                        bar = "#" * filled + "-" * (segments - filled)
+                        print(
+                            f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
+                            flush=True,
+                        )
+                        progress_state["last"] = done
+                        progress_state["last_emit"] = now
+                    elif timed_heartbeat and done == progress_state["last"]:
+                        print("[4/5] Sentiment analysis still running...", flush=True)
+                        progress_state["last_emit"] = now
 
                 analyzed = analyze_pending(
                     keyword=args.keyword,
@@ -223,7 +239,12 @@ def main(argv: list[str] | None = None) -> int:
                 "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
                 flush=True,
             )
-            progress_state = {"last": -1, "announced_start": False}
+            progress_state = {
+                "last": -1,
+                "announced_start": False,
+                "last_emit": time.perf_counter(),
+            }
+            heartbeat_interval = 15.0
 
             def _analyzer_ready(total: int) -> None:
                 if total <= 0:
@@ -234,10 +255,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
 
             def _progress_callback(done: int, total: int) -> None:
+                now = time.perf_counter()
                 if total == 0:
                     if progress_state["last"] != 0:
                         print("[4/5] No content pending sentiment analysis.", flush=True)
                         progress_state["last"] = 0
+                        progress_state["last_emit"] = now
                     return
 
                 if not progress_state["announced_start"]:
@@ -246,20 +269,28 @@ def main(argv: list[str] | None = None) -> int:
                         flush=True,
                     )
                     progress_state["announced_start"] = True
+                    progress_state["last_emit"] = now
 
                 segments = 20
                 step = max(1, total // segments)
-                if done == total or done == 0 or done % step == 0:
-                    if done != progress_state["last"]:
-                        ratio = done / total if total else 0
-                        filled = int(round(ratio * segments))
-                        filled = max(0, min(segments, filled))
-                        bar = "#" * filled + "-" * (segments - filled)
-                        print(
-                            f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
-                            flush=True,
-                        )
-                        progress_state["last"] = done
+                emit_due_to_step = done % step == 0 or done in (0, total)
+                early_heartbeat = done <= 5 and done != progress_state["last"]
+                timed_heartbeat = (now - progress_state["last_emit"]) >= heartbeat_interval
+
+                if done != progress_state["last"] and (emit_due_to_step or early_heartbeat or timed_heartbeat):
+                    ratio = done / total if total else 0
+                    filled = int(round(ratio * segments))
+                    filled = max(0, min(segments, filled))
+                    bar = "#" * filled + "-" * (segments - filled)
+                    print(
+                        f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
+                        flush=True,
+                    )
+                    progress_state["last"] = done
+                    progress_state["last_emit"] = now
+                elif timed_heartbeat and done == progress_state["last"]:
+                    print("[4/5] Sentiment analysis still running...", flush=True)
+                    progress_state["last_emit"] = now
 
             analyzed = analyze_pending(
                 keyword=args.keyword,

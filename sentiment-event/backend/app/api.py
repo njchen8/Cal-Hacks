@@ -77,7 +77,13 @@ def _ensure_csv_report(
     return None, log_lines
 
 
-def _cli_command(keyword: str, limit: Optional[int], engine: str, source: PipelineSource) -> list[str]:
+def _cli_command(
+    keyword: str,
+    limit: Optional[int],
+    engine: str,
+    source: PipelineSource,
+    ignore_cache: bool = False,
+) -> list[str]:
     command = [
         sys.executable,
         "-u",
@@ -93,14 +99,22 @@ def _cli_command(keyword: str, limit: Optional[int], engine: str, source: Pipeli
         command.extend(["--limit", str(limit)])
     if engine != "default":
         command.extend(["--engine", engine])
+    if ignore_cache and source == "twitter":
+        command.append("--ignore-cache")
     return command
 
 
-def _run_cli(keyword: str, limit: Optional[int], engine: str, sources: Iterable[PipelineSource]) -> str:
+def _run_cli(
+    keyword: str,
+    limit: Optional[int],
+    engine: str,
+    sources: Iterable[PipelineSource],
+    ignore_cache: bool = False,
+) -> str:
     outputs: list[str] = []
     for source in sources:
         result = subprocess.run(
-            _cli_command(keyword, limit, engine, source),
+            _cli_command(keyword, limit, engine, source, ignore_cache=ignore_cache),
             cwd=str(BACKEND_ROOT),
             capture_output=True,
             text=True,
@@ -118,9 +132,15 @@ def _run_cli(keyword: str, limit: Optional[int], engine: str, sources: Iterable[
     return "\n".join(outputs)
 
 
-def _cli_output_lines(keyword: str, limit: Optional[int], engine: str, source: PipelineSource):
+def _cli_output_lines(
+    keyword: str,
+    limit: Optional[int],
+    engine: str,
+    source: PipelineSource,
+    ignore_cache: bool = False,
+):
     process = subprocess.Popen(
-        _cli_command(keyword, limit, engine, source),
+        _cli_command(keyword, limit, engine, source, ignore_cache=ignore_cache),
         cwd=str(BACKEND_ROOT),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -227,12 +247,24 @@ def analyze_keyword(payload: AnalyzeRequestModel) -> AnalyzeResponseModel:
 
     cli_output = ""
     if payload.refresh:
-        cli_output = _run_cli(keyword, payload.limit, payload.engine, ("twitter", "reddit"))
+        cli_output = _run_cli(
+            keyword,
+            payload.limit,
+            payload.engine,
+            ("twitter", "reddit"),
+            ignore_cache=True,
+        )
 
     _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
     if total_content == 0:
-        cli_output = _run_cli(keyword, payload.limit, payload.engine, ("twitter", "reddit"))
+        cli_output = _run_cli(
+            keyword,
+            payload.limit,
+            payload.engine,
+            ("twitter", "reddit"),
+            ignore_cache=True,
+        )
         _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
     message = cli_output or f"{total_content} content entries currently stored for '{keyword}'."
@@ -257,6 +289,7 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
         _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
         needs_refresh = payload.refresh or total_content == 0
+        ignore_cache = payload.refresh or total_content == 0
         if needs_refresh:
             yield _encode_event({"type": "log", "message": "Refreshing dataset via backend CLI..."})
             try:
@@ -264,7 +297,13 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
                     label = "Twitter" if source == "twitter" else "Reddit"
                     yield _encode_event({"type": "log", "message": f"Running {label} pipeline..."})
                     try:
-                        for line in _cli_output_lines(keyword, payload.limit, payload.engine, source):
+                        for line in _cli_output_lines(
+                            keyword,
+                            payload.limit,
+                            payload.engine,
+                            source,
+                            ignore_cache=ignore_cache,
+                        ):
                             if not line:
                                 continue
                             yield _encode_event({"type": "log", "message": line})
@@ -291,6 +330,7 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
                 yield _encode_event({"type": "log", "message": entry})
 
         lava_summary_text: Optional[str] = None
+        lava_summary_path: Optional[Path] = None
         if total_content > 0 and _lava_env_ready():
             yield _encode_event({"type": "log", "message": "Preparing Lava Gateway summary..."})
             try:
@@ -302,6 +342,7 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
                 for entry in lava_logs:
                     yield _encode_event({"type": "log", "message": entry})
                 if summary_path:
+                    lava_summary_path = summary_path
                     yield _encode_event(
                         {
                             "type": "log",
@@ -321,7 +362,12 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
             )
 
         if lava_summary_text:
-            yield _encode_event({"type": "lava", "message": lava_summary_text})
+            lava_message: dict[str, object] = {"text": lava_summary_text, "keyword": keyword}
+            if csv_path:
+                lava_message["csvPath"] = str(csv_path)
+            if lava_summary_path:
+                lava_message["summaryPath"] = str(lava_summary_path)
+            yield _encode_event({"type": "lava", "message": lava_message})
 
         yield _encode_event(
             {

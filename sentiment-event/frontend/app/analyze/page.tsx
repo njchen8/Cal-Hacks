@@ -11,6 +11,9 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<StoredContentResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [lavaSummary, setLavaSummary] = useState<string | null>(null);
+  const [lavaMetadata, setLavaMetadata] = useState<{ keyword: string; csvPath?: string; summaryPath?: string } | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeEngine, setActiveEngine] = useState<"default" | "fast">("default");
@@ -34,7 +37,8 @@ export default function AnalyzePage() {
     setError(null);
     setLogs([]);
   setLavaSummary(null);
-    setResult(null);
+  setResult(null);
+  setLavaMetadata(null);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -94,15 +98,37 @@ export default function AnalyzePage() {
 
       const handleEventLine = (rawLine: string): boolean => {
         try {
-          const event = JSON.parse(rawLine) as { type: string; message?: string; payload?: StoredContentResponse };
+          const event = JSON.parse(rawLine) as {
+            type: string;
+            message?: string | { text: string; keyword: string; csvPath?: string; summaryPath?: string };
+            payload?: StoredContentResponse;
+          };
           if (event.type === "log" && typeof event.message === "string") {
             const message = event.message;
             setLogs((prev) => [...prev, message]);
             updateFallbackSummary(message);
             return true;
           }
-          if (event.type === "lava" && typeof event.message === "string") {
-            setLavaSummary(event.message.trim());
+          if (event.type === "lava") {
+            if (typeof event.message === "string") {
+              setLavaSummary(event.message.trim());
+              return true;
+            }
+
+            if (event.message && typeof event.message === "object") {
+              const { text, keyword: kw, csvPath, summaryPath } = event.message;
+              if (typeof text === "string") {
+                setLavaSummary(text.trim());
+              }
+              if (typeof kw === "string" || csvPath || summaryPath) {
+                setLavaMetadata({
+                  keyword: typeof kw === "string" ? kw : input,
+                  csvPath: typeof csvPath === "string" ? csvPath : undefined,
+                  summaryPath: typeof summaryPath === "string" ? summaryPath : undefined,
+                });
+              }
+              return true;
+            }
             return true;
           }
           if (event.type === "summary" && event.payload) {
@@ -275,6 +301,13 @@ export default function AnalyzePage() {
               Lava Gateway summary
             </h2>
             <div className="lava-output">
+              {lavaMetadata && (
+                <p className="lava-meta">
+                  Keyword <strong>{lavaMetadata.keyword}</strong>
+                  {lavaMetadata.summaryPath ? ` · Summary: ${lavaMetadata.summaryPath}` : null}
+                  {lavaMetadata.csvPath ? ` · CSV: ${lavaMetadata.csvPath}` : null}
+                </p>
+              )}
               <ReactMarkdown>{lavaSummary}</ReactMarkdown>
             </div>
           </div>

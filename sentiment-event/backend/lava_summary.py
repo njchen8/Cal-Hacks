@@ -173,92 +173,91 @@ class LavaGatewaySummarizer:
         negative_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEGATIVE'][:5]
         neutral_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEUTRAL'][:5]
 
-        # Format emotion scores with exact values
-        positive_emotions_text = '\n'.join(
-            f"  - **{emotion.capitalize()}**: {score:.2f}"
-            for emotion, score in stats['top_emotions_positive'].items()
-        )
-        negative_emotions_text = '\n'.join(
-            f"  - **{emotion.capitalize()}**: {score:.2f}"
-            for emotion, score in stats['top_emotions_negative'].items()
-        )
+        total_posts = max(stats['total_posts'], 1)
 
-        prompt = f"""You are a data storyteller creating an engaging, scannable sentiment report.
+        def share_label(count: int) -> str:
+            if count <= 0:
+                return "minimal"
+            ratio = count / total_posts
+            if ratio >= 0.6:
+                return "most"
+            if ratio >= 0.35:
+                return "many"
+            if ratio >= 0.15:
+                return "some"
+            return "a handful"
 
-**DATA CONTEXT:**
-Topic: {stats['keyword']} | Source: {stats['source']} | Posts: {stats['total_posts']}
+        sentiment_mix = {
+            "positive": share_label(stats['sentiment_counts'].get('POSITIVE', 0)),
+            "negative": share_label(stats['sentiment_counts'].get('NEGATIVE', 0)),
+            "neutral": share_label(stats['sentiment_counts'].get('NEUTRAL', 0)),
+        }
 
-Sentiment Distribution:
-- Positive: {stats['sentiment_percentages'].get('POSITIVE', 0):.1f}% ({stats['sentiment_counts'].get('POSITIVE', 0)} posts)
-- Negative: {stats['sentiment_percentages'].get('NEGATIVE', 0):.1f}% ({stats['sentiment_counts'].get('NEGATIVE', 0)} posts)
-- Neutral: {stats['sentiment_percentages'].get('NEUTRAL', 0):.1f}% ({stats['sentiment_counts'].get('NEUTRAL', 0)} posts)
+        positive_emotions = list(stats['top_emotions_positive'].keys())[:3]
+        negative_emotions = list(stats['top_emotions_negative'].keys())[:3]
 
-Emotion Scores (0.00 to 1.00 scale):
-Positive Emotions:
-{positive_emotions_text}
+        def size_label(total: int) -> str:
+            if total <= 0:
+                return "no content available"
+            if total < 20:
+                return "a small sample"
+            if total < 60:
+                return "a modest sample"
+            if total < 150:
+                return "a large sample"
+            return "a very large sample"
 
-Negative Emotions:
-{negative_emotions_text}
+        prompt = f"""You are a qualitative insights author. Study the dataset below and craft a narrative report.
 
-Sample posts:
-Positive: {positive_samples[0] if positive_samples else 'N/A'}
-Negative: {negative_samples[0] if negative_samples else 'N/A'}
+Dataset snapshot:
+- Topic: {stats['keyword']}
+- Source: {stats['source']}
+- Sample size: {size_label(stats['total_posts'])}
 
-**YOUR TASK:**
-Write a concise, beautifully formatted sentiment report using proper Markdown. Use the Nunito font aesthetic (friendly, modern, clean).
+Qualitative sentiment mix:
+- Positive reactions: {sentiment_mix['positive']}
+- Negative reactions: {sentiment_mix['negative']}
+- Neutral reactions: {sentiment_mix['neutral']}
 
-**FORMAT REQUIREMENTS:**
-1. Use **bold** for key terms and statistics
-2. Keep paragraphs SHORT (2-3 sentences max)
-3. Use line breaks for readability
-4. Include exact percentages from the data
-5. Be specific, not generic
-6. Write in present tense
-7. Total length: 400-600 words MAX
+Emotion cues:
+- Dominant positive emotions: {', '.join(positive_emotions) if positive_emotions else 'none surfaced'}
+- Dominant negative emotions: {', '.join(negative_emotions) if negative_emotions else 'none surfaced'}
 
-**STRUCTURE:**
+Sample positive reactions:
+{chr(10).join(f'- {post}' for post in positive_samples) if positive_samples else '- (no clear positive examples appeared)'}
 
-## Sentiment Overview
-[2-3 sentences max. State the dominant sentiment, key percentage, and one interesting insight]
+Sample negative reactions:
+{chr(10).join(f'- {post}' for post in negative_samples) if negative_samples else '- (no clear negative examples appeared)'}
 
-## Emotion Breakdown
-REQUIRED: Include the exact emotion scores from the data above. Format like this:
+Sample neutral reactions:
+{chr(10).join(f'- {post}' for post in neutral_samples) if neutral_samples else '- (no clearly neutral examples appeared)'}
 
-**Positive Emotions:**
-- Joy: [value]
-- Trust: [value]
-- Desire: [value]
-- Anticipation: [value]
+Write a concise Markdown report (under 350 words) using these sections:
 
-**Negative Emotions:**
-- Anger: [value]
-- Fear: [value]
-- Greed: [value]
+### Sentiment Overview
+Describe the prevailing mood without quoting exact counts, scores, or percentages. Use qualitative phrases like "most", "many", "a few".
 
-[1-2 sentences explaining what these emotion patterns reveal about user sentiment]
+### Emotional Signals
+Explain the emotional undertones. Mention only the dominant emotions listed above and describe how they appear in the posts.
 
-## What People Are Saying
-[3-4 SHORT paragraphs. Each covers ONE specific theme. Use **bold** for theme names. Be concrete with examples from the data.]
+### What People Are Saying
+Summarize major conversation threads. Reference specific pain points or delights using natural language paraphrases instead of metrics.
 
-## Positive Highlights
-[2-3 sentences. What do users love? Be specific. Use **bold** for key positive aspects.]
+### Bright Spots
+Call out positive observations, even if scarce. Focus on tone and context rather than numbers.
 
-## Concerns & Critiques
-[2-3 sentences. What are the main complaints? Be direct. Use **bold** for key issues.]
+### Pain Points
+Lay out the biggest friction areas. Be direct and empathetic; avoid percentages or exact counts.
 
-## Key Insights
-[Exactly 3 bullet points. Each bullet is ONE sentence. Start with action verbs. Make them actionable.]
+### Actions To Consider
+Provide three bullet points with pragmatic, plain-language recommendations. Each bullet should be one sentence, action-oriented, and qualitative.
 
-**STYLE GUIDE:**
-- Friendly but professional tone
-- Short, punchy sentences
-- Avoid: "users express", "the data shows", "it appears that"
-- Instead: Use active voice and direct statements
-- Use specific numbers from the data provided
-- Make it scannable and visually clean
-- DO NOT use emojis in the output - use clean text headers only
-
-Begin writing now. Use proper Markdown formatting."""
+Writing guidelines:
+- No numerical values, percentages, or raw scores anywhere in the output.
+- Maintain a professional, human tone (no marketing fluff).
+- Use short paragraphs (max 2 sentences) for readability.
+- Prioritize clarity and storytelling over analytics jargon.
+"""
 
         return prompt
 

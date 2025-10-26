@@ -55,6 +55,8 @@ def scrape(keyword: str, limit: int | None = None, subreddit: str = "all") -> Li
     if remaining == 0:
         return []
 
+    target_count = remaining
+
     # ============================================================================
     # REDDIT API CLIENT INITIALIZATION
     # ============================================================================
@@ -115,9 +117,19 @@ def scrape(keyword: str, limit: int | None = None, subreddit: str = "all") -> Li
 
             remaining -= 1
 
+            fetched = target_count - remaining
+            if target_count > 0:
+                report_interval = max(1, target_count // 5)
+                if fetched == 1 or fetched == target_count or fetched % report_interval == 0:
+                    print(
+                        f"[reddit] Progress: {fetched}/{target_count} posts fetched (sleeping to respect rate limits)...",
+                        flush=True,
+                    )
+
             # Add delay to respect rate limits and avoid blocking
             # Reddit free tier: be conservative to avoid IP bans
-            time.sleep(2.0)  # ~30 requests per minute (safer than 100/min)
+            if remaining > 0:
+                time.sleep(2.0)  # ~30 requests per minute (safer than 100/min)
 
     except Exception as e:
         raise RuntimeError(f"Reddit API error: {str(e)}")

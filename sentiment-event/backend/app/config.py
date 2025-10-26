@@ -38,8 +38,9 @@ class Settings:
         f"sqlite:///{(base_dir / 'data' / 'tweets.db').as_posix()}",
     )
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
-    scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
+    scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "180"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
+    sentiment_batch_size: int = max(1, int(os.getenv("SENTIMENT_BATCH_SIZE", "8")))
 
     # Twitter API credentials (Twikit manual scraper - main implementation)
     twitter_cookie_header: Optional[str] = os.getenv("TWITTER_COOKIE_HEADER")
