@@ -9,6 +9,7 @@ export default function AnalyzePage() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<StoredContentResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [lavaSummary, setLavaSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeEngine, setActiveEngine] = useState<"default" | "fast">("default");
@@ -31,6 +32,7 @@ export default function AnalyzePage() {
     setActiveEngine(engine);
     setError(null);
     setLogs([]);
+  setLavaSummary(null);
     setResult(null);
 
     try {
@@ -96,6 +98,10 @@ export default function AnalyzePage() {
             const message = event.message;
             setLogs((prev) => [...prev, message]);
             updateFallbackSummary(message);
+            return true;
+          }
+          if (event.type === "lava" && typeof event.message === "string") {
+            setLavaSummary(event.message.trim());
             return true;
           }
           if (event.type === "summary" && event.payload) {
@@ -262,6 +268,14 @@ export default function AnalyzePage() {
         )}
 
         {error && <div className="status-banner error fade-up">{error}</div>}
+        {lavaSummary && (
+          <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
+            <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
+              Lava Gateway summary
+            </h2>
+            <pre className="lava-output">{lavaSummary}</pre>
+          </div>
+        )}
         {logs.length > 0 && (
           <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
@@ -316,6 +330,16 @@ export default function AnalyzePage() {
           line-height: 1.4;
           max-height: 240px;
           overflow-y: auto;
+          white-space: pre-wrap;
+        }
+
+        .lava-output {
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          padding: 1rem;
+          font-family: "Inter", "Segoe UI", sans-serif;
+          font-size: 0.95rem;
+          line-height: 1.5;
           white-space: pre-wrap;
         }
       `}</style>

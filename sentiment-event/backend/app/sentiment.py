@@ -13,25 +13,85 @@ PRIMARY_MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 EMOTION_MODEL = "facebook/bart-large-mnli"
 FAST_MODEL = "distilbert-base-uncased-finetuned-sst-2-english"
 EMOTION_LABELS = [
+    # Core negative emotions
     "fear",
-    "desire",
-    "greed",
-    "joy",
     "anger",
+    "greed",
+    "sadness",
+    "disgust",
+    "envy",
+    "shame",
+    "guilt",
+    "boredom",
+    "frustration",
+    "loneliness",
+    "confusion",
+
+    # Core positive emotions
+    "joy",
     "trust",
+    "love",
+    "hope",
     "anticipation",
+    "desire",
+    "gratitude",
+    "relief",
+    "excitement",
+    "pride",
+    "curiosity",
+    "confidence",
+
+    # Neutral or mixed-valence emotions
     "surprise",
+    "awe",
+    "interest",
+    "nostalgia",
+    "calm",
+    "neutrality",
+    "tension",
+    "disappointment",
 ]
+
 SIGNAL_POLARITY = {
+    # Negative
     "fear": "negative",
     "anger": "negative",
     "greed": "negative",
-    "surprise": "neutral",
-    "desire": "positive",
+    "sadness": "negative",
+    "disgust": "negative",
+    "envy": "negative",
+    "shame": "negative",
+    "guilt": "negative",
+    "boredom": "negative",
+    "frustration": "negative",
+    "loneliness": "negative",
+    "confusion": "negative",
+    "disappointment": "negative",
+
+    # Positive
     "joy": "positive",
     "trust": "positive",
+    "love": "positive",
+    "hope": "positive",
     "anticipation": "positive",
+    "desire": "positive",
+    "gratitude": "positive",
+    "relief": "positive",
+    "excitement": "positive",
+    "pride": "positive",
+    "curiosity": "positive",
+    "confidence": "positive",
+    "awe": "positive",
+    "nostalgia": "positive",
+    "calm": "positive",
+
+    # Neutral
+    "surprise": "neutral",
+    "interest": "neutral",
+    "neutrality": "neutral",
+    "tension": "neutral",
 }
+
 
 AnalyzerVariant = Literal["default", "fast"]
 

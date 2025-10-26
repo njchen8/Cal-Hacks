@@ -133,7 +133,19 @@ def main(argv: list[str] | None = None) -> int:
                 analyzed = 0
                 print("[4/5] Skipping sentiment analysis; using cached results.", flush=True)
             else:
+                print(
+                    "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
+                    flush=True,
+                )
                 progress_state = {"last": -1, "announced_start": False}
+
+                def _analyzer_ready(total: int) -> None:
+                    if total <= 0:
+                        return
+                    print(
+                        f"[4/5] Sentiment analyzer ready. Processing {total} item(s)...",
+                        flush=True,
+                    )
 
                 def _progress_callback(done: int, total: int) -> None:
                     if total == 0:
@@ -167,6 +179,7 @@ def main(argv: list[str] | None = None) -> int:
                     keyword=args.keyword,
                     progress_callback=_progress_callback,
                     variant=args.engine,
+                    on_ready=_analyzer_ready,
                 )
 
                 if progress_state["last"] != analyzed and analyzed > 0:
@@ -206,7 +219,19 @@ def main(argv: list[str] | None = None) -> int:
                 flush=True,
             )
 
+            print(
+                "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
+                flush=True,
+            )
             progress_state = {"last": -1, "announced_start": False}
+
+            def _analyzer_ready(total: int) -> None:
+                if total <= 0:
+                    return
+                print(
+                    f"[4/5] Sentiment analyzer ready. Processing {total} Reddit item(s)...",
+                    flush=True,
+                )
 
             def _progress_callback(done: int, total: int) -> None:
                 if total == 0:
@@ -240,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
                 keyword=args.keyword,
                 progress_callback=_progress_callback,
                 variant=args.engine,
+                on_ready=_analyzer_ready,
             )
 
             if progress_state["last"] != analyzed and analyzed > 0:

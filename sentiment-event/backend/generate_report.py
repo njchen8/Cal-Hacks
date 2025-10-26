@@ -3,6 +3,7 @@
 import csv
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from app.database import get_session
@@ -18,7 +19,7 @@ def sanitize_filename(keyword: str) -> str:
     return safe_name
 
 
-def generate_report_by_keyword(keyword: str = None, output_dir: str = "reports"):
+def generate_report_by_keyword(keyword: str = None, output_dir: str = "reports") -> list[Path]:
     """Generate a CSV report of sentiment analysis results for a specific keyword.
 
     Args:
@@ -60,7 +61,7 @@ def generate_report_by_keyword(keyword: str = None, output_dir: str = "reports")
 
         if not posts:
             print(f"No analyzed posts found{f' for keyword: {keyword}' if keyword else ''}. Run analysis first.")
-            return
+            return []
 
         # Group posts by keyword
         posts_by_keyword = {}
@@ -71,7 +72,7 @@ def generate_report_by_keyword(keyword: str = None, output_dir: str = "reports")
             posts_by_keyword[kw].append(post)
 
         # Generate CSV for each keyword
-        total_files = 0
+        generated_files: list[Path] = []
         for kw, kw_posts in posts_by_keyword.items():
             # Create safe filename
             safe_kw = sanitize_filename(kw)
@@ -149,15 +150,18 @@ def generate_report_by_keyword(keyword: str = None, output_dir: str = "reports")
             print(f"  Neutral:  {neutral_count} ({neutral_count/len(kw_posts)*100:.1f}%)")
             print(f"{'='*80}")
 
-            total_files += 1
+            generated_files.append(output_file)
 
-        print(f"\n✅ Generated {total_files} CSV file(s) in {output_dir}/ directory")
-        return total_files
+        total_files = len(generated_files)
+        print(f"\n[OK] Generated {total_files} CSV file(s) in {output_dir}/ directory")
+        return generated_files
 
 
 if __name__ == "__main__":
-    import sys
-
     # Allow optional keyword argument
     keyword = sys.argv[1] if len(sys.argv) > 1 else None
-    generate_report_by_keyword(keyword)
+    generated_files = generate_report_by_keyword(keyword)
+    total_files = len(generated_files)
+    if total_files == 0:
+        sys.exit(1)
+    sys.exit(0)

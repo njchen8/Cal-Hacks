@@ -19,14 +19,12 @@ def analyze_pending(
     keyword: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     variant: str = "default",
+    on_ready: Optional[Callable[[int], None]] = None,
 ) -> int:
     """Analyze stored content items without sentiment and persist results.
 
     Returns the number of content items updated.
     """
-
-    analyzer = get_analyzer(variant)
-    updated = 0
 
     with get_session() as session:
         stmt = select(Tweet).where(Tweet.sentiment.is_(None)).order_by(Tweet.created_at.desc())
@@ -41,13 +39,23 @@ def analyze_pending(
         if progress_callback:
             progress_callback(0, total)
 
+        analyzer = get_analyzer(variant)
+
+        if on_ready:
+            try:
+                on_ready(total)
+            except Exception:  # pragma: no cover - defensive; logging callbacks should not break pipeline
+                pass
+
+        updated = 0
+
         for index, tweet in enumerate(tweets, start=1):
             tweet.sentiment = analyzer.analyze(tweet.content)
             updated += 1
             if progress_callback:
                 progress_callback(index, total)
 
-    return updated
+        return updated
 
 
 def scrape(keyword: str, limit: Optional[int] = None, ignore_cache: bool = False) -> ScrapeResult:
