@@ -1,41 +1,21 @@
 import Link from "next/link";
+import ReactionTicker from "@/components/ReactionTicker";
 
 const featureItems = [
   {
-    title: "Instant Sentiment Analysis",
+    title: "Product pulse in minutes",
     description:
-      "Analyze any topic, product, or trend in minutes. Get comprehensive sentiment breakdowns with AI-powered summaries from Twitter, Reddit, and Facebook.",
-    icon: "📊"
+      "Blend headline sentiment with emotion signals to understand how launches, feature drops, and pricing changes land with customers.",
   },
   {
-    title: "Multi-Source Data Collection",
+    title: "Emotion-backed benchmarking",
     description:
-      "Gather authentic opinions from multiple social media platforms. Access real conversations happening across Twitter, Reddit, and Facebook communities.",
-    icon: "🌐"
+      "Compare joy, trust, desire, and concern across releases to spot what drives delight or frustration in your product experience.",
   },
   {
-    title: "Emotion Intelligence",
+    title: "Global listening, zero noise",
     description:
-      "Go beyond positive/negative sentiment. Understand nuanced emotions like joy, trust, desire, anger, and concern in every conversation.",
-    icon: "💭"
-  },
-  {
-    title: "Educational & Research Ready",
-    description:
-      "Perfect for students, teachers, and researchers. Analyze public opinion, study trends, or teach data analysis and sentiment techniques.",
-    icon: "🎓"
-  },
-  {
-    title: "Product Intelligence",
-    description:
-      "Track how consumers feel about products, features, or brands. Make data-driven decisions with real-time sentiment insights.",
-    icon: "🚀"
-  },
-  {
-    title: "Trend Discovery",
-    description:
-      "Explore emerging topics and understand public discourse. Discover what people are excited, concerned, or talking about right now.",
-    icon: "🔍"
+      "Scrape social conversations from multiple regions, keep traceability to original posts, and track the narrative as it evolves.",
   },
 ];
 
@@ -44,35 +24,37 @@ export default function HomePage() {
     <div className="page">
       <section className="main-hero">
         <div className="hero-copy">
-          <h1 className="hero-title fade-up">Understand what people really think</h1>
+          <h1 className="hero-title fade-up">Bluberri shows how the globe feels about every launch moment.</h1>
           <p className="fade-up delay-1">
-            blueberri analyzes social media conversations to reveal authentic sentiment and emotions.
-            Perfect for students, researchers, educators, businesses, and anyone curious about public opinion.
+            Bluberri transforms raw social data into a blueberry-blue command center for product, marketing, and CX teams.
+            Track reactions to features, packaging, or campaigns and uncover the emotions stitched through every post.
           </p>
           <div className="hero-actions fade-up delay-2">
             <Link href="/analyze" className="button-primary">
-              Start analyzing
+              Try the analyzer
             </Link>
-            <Link href="/docs" className="button-secondary">
-              View documentation
+            <Link href="/about" className="button-secondary">
+              Learn about the project
             </Link>
+          </div>
+          <div className="fade-up delay-3">
+            <ReactionTicker />
           </div>
         </div>
       </section>
 
       <section>
-        <h2 className="section-heading">Features</h2>
+        <h2 className="section-heading">Why product sentiment intelligence matters</h2>
         <p className="section-subtitle">
-          Analyze anything from product launches to social trends. Get AI-powered insights from real conversations across Twitter, Reddit, and Facebook.
+          Product managers, brand strategists, and growth leaders need signal in the noise. Bluberri surfaces how customers actually feel so you can refine roadmaps, launch smarter, and protect brand trust.
         </p>
         <div className="feature-grid">
           {featureItems.map((feature, index) => (
             <article
               key={feature.title}
               className="feature-card fade-up"
-              style={{ animationDelay: `${0.08 * index + 0.1}s` }}
+              style={{ animationDelay: `${0.12 * index + 0.1}s` }}
             >
-              <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{feature.icon}</div>
               <h3>{feature.title}</h3>
               <p>{feature.description}</p>
             </article>
