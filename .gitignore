@@ -42,6 +42,9 @@ sentiment-event/backend/data/
 sentiment-event/backend/sentiment_report.txt
 sentiment-event/backend/sentiment_report.csv
 sentiment-event/backend/reports/
+# Allow sample CSV files
+!sentiment-event/backend/reports/sentiment_iphone.csv
+!sentiment-event/backend/reports/sentiment_ray-ban_meta.csv
 
 # Misc
 *.log
