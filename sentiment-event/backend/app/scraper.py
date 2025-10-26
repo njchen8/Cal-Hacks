@@ -6,6 +6,7 @@ import asyncio
 import csv
 import json
 import re
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -179,13 +180,20 @@ def scrape(keyword: str, limit: int | None = None) -> List[Tweet]:
     remaining = limit
     cursor: Optional[str] = None
     tweets: List[Tweet] = []
+    search_query = query
+    if " " in search_query and '"' not in search_query:
+        search_query = f'"{search_query}"'
+
+    target_count = remaining
+    if target_count > 0:
+        print(f"[twitter] Starting scrape batch; targeting up to {target_count} tweets...", flush=True)
 
     while remaining > 0:
-        batch_size = min(remaining, 20)
+        batch_size = min(remaining, 30)
         try:
             results = _run_async(
                 client.search_tweet(
-                    query,
+                    search_query,
                     product="Latest",
                     count=batch_size,
                     cursor=cursor,
@@ -227,12 +235,33 @@ def scrape(keyword: str, limit: int | None = None) -> List[Tweet]:
             )
 
             remaining -= 1
+            if target_count > 0:
+                fetched = target_count - remaining
+                report_interval = max(1, target_count // 5)
+                if fetched == 1 or fetched == target_count or fetched % report_interval == 0:
+                    print(
+                        f"[twitter] Progress: {fetched}/{target_count} tweets fetched.",
+                        flush=True,
+                    )
             if remaining == 0:
                 break
 
         cursor = getattr(results, "next_cursor", None)
         if not cursor:
             break
+
+        if remaining > 0:
+            time.sleep(1.5)
+
+    # Gentle pause between batches to reduce scrape pressure and stay region-friendly
+    time.sleep(1.5)
+
+    if target_count > 0:
+        fetched_total = target_count - remaining
+        print(
+            f"[twitter] Finished scraping: fetched {fetched_total}/{target_count} tweets.",
+            flush=True,
+        )
 
     return tweets
 

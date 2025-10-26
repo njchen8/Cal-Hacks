@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Dict, Literal
+from typing import Dict, List, Literal
 
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
@@ -147,13 +147,11 @@ class SentimentAnalyzer:
 
     def analyze(self, text: str) -> Dict[str, Dict[str, float]]:
         """Return positive/negative probabilities with granular signals."""
-        text = text.strip()
-        if not text:
-            return _empty_analysis()
+        return self.analyze_many([text])[0]
 
-        # Use truncation parameter to handle long texts (max 512 tokens for RoBERTa)
-        sentiment_scores = self._sentiment_pipeline(text, return_all_scores=True, truncation=True, max_length=512)[0]
-        built = {score["label"].lower(): score["score"] for score in sentiment_scores}
+    @staticmethod
+    def _build_payload(sentiment_scores, emotion_result) -> Dict[str, Dict[str, float]]:
+        built = {score["label"].lower(): float(score["score"]) for score in sentiment_scores}
         positive = float(built.get("positive", 0.0))
         negative = float(built.get("negative", 0.0))
         neutral = float(built.get("neutral", 0.0))
@@ -162,17 +160,14 @@ class SentimentAnalyzer:
         top_label = max(candidates, key=candidates.get)
         top_score = candidates[top_label]
 
-        emotion_result = self._emotion_pipeline(
-            sequences=text,
-            candidate_labels=EMOTION_LABELS,
-            hypothesis_template="The content expresses {} emotion.",
-        )
-
         signal_payload: Dict[str, Dict[str, float]] = {"positive": {}, "negative": {}, "neutral": {}}
-        for label, score in zip(emotion_result["labels"], emotion_result["scores"]):
-            polarity_bucket = SIGNAL_POLARITY.get(label, "neutral")
-            if score >= settings.min_probability:
-                signal_payload[polarity_bucket][label] = float(score)
+        if isinstance(emotion_result, dict):
+            labels = emotion_result.get("labels", [])
+            scores = emotion_result.get("scores", [])
+            for label, score in zip(labels, scores):
+                polarity_bucket = SIGNAL_POLARITY.get(label, "neutral")
+                if score >= settings.min_probability:
+                    signal_payload[polarity_bucket][label] = float(score)
 
         return {
             "primary": {
@@ -184,6 +179,45 @@ class SentimentAnalyzer:
             },
             "signals": signal_payload,
         }
+
+    def analyze_many(self, texts: List[str]) -> List[Dict[str, Dict[str, float]]]:
+        results: List[Dict[str, Dict[str, float]]] = [_empty_analysis() for _ in texts]
+        pending_indices: List[int] = []
+        pending_texts: List[str] = []
+
+        for idx, text in enumerate(texts):
+            stripped = text.strip()
+            if not stripped:
+                continue
+            pending_indices.append(idx)
+            pending_texts.append(stripped)
+
+        if not pending_texts:
+            return results
+
+        sentiment_outputs = self._sentiment_pipeline(
+            pending_texts,
+            return_all_scores=True,
+            truncation=True,
+            max_length=512,
+            batch_size=settings.sentiment_batch_size,
+        )
+        if isinstance(sentiment_outputs, dict):
+            sentiment_outputs = [sentiment_outputs]
+
+        emotion_outputs = self._emotion_pipeline(
+            sequences=pending_texts,
+            candidate_labels=EMOTION_LABELS,
+            hypothesis_template="The content expresses {} emotion.",
+            batch_size=settings.sentiment_batch_size,
+        )
+        if isinstance(emotion_outputs, dict):
+            emotion_outputs = [emotion_outputs]
+
+        for idx, sentiment_scores, emotion_result in zip(pending_indices, sentiment_outputs, emotion_outputs):
+            results[idx] = self._build_payload(sentiment_scores, emotion_result)
+
+        return results
 
 
 class FastSentimentAnalyzer:
@@ -197,44 +231,63 @@ class FastSentimentAnalyzer:
         )
 
     def analyze(self, text: str) -> Dict[str, Dict[str, float]]:
-        text = text.strip()
-        if not text:
-            return _empty_analysis()
+        return self.analyze_many([text])[0]
 
-        scores = self._sentiment_pipeline(
-            text,
+    def analyze_many(self, texts: List[str]) -> List[Dict[str, Dict[str, float]]]:
+        results: List[Dict[str, Dict[str, float]]] = [_empty_analysis() for _ in texts]
+        pending_indices: List[int] = []
+        pending_texts: List[str] = []
+
+        for idx, text in enumerate(texts):
+            stripped = text.strip()
+            if not stripped:
+                continue
+            pending_indices.append(idx)
+            pending_texts.append(stripped)
+
+        if not pending_texts:
+            return results
+
+        sentiment_batches = self._sentiment_pipeline(
+            pending_texts,
             truncation=True,
             max_length=256,
             return_all_scores=True,
-        )[0]
+            batch_size=settings.sentiment_batch_size,
+        )
+        if isinstance(sentiment_batches, dict):
+            sentiment_batches = [sentiment_batches]
 
-        mapped = {entry["label"].upper(): float(entry["score"]) for entry in scores}
-        positive = mapped.get("POSITIVE", 0.0)
-        negative = mapped.get("NEGATIVE", 0.0)
-        total = positive + negative
+        for idx, batch_scores in zip(pending_indices, sentiment_batches):
+            mapped = {entry["label"].upper(): float(entry["score"]) for entry in batch_scores}
+            positive = mapped.get("POSITIVE", 0.0)
+            negative = mapped.get("NEGATIVE", 0.0)
+            total = positive + negative
 
-        if total > 1.0:
-            positive /= total
-            negative /= total
+            if total > 1.0:
+                positive /= total
+                negative /= total
 
-        positive = max(0.0, min(1.0, positive))
-        negative = max(0.0, min(1.0, negative))
-        neutral = max(0.0, 1.0 - (positive + negative))
+            positive = max(0.0, min(1.0, positive))
+            negative = max(0.0, min(1.0, negative))
+            neutral = max(0.0, 1.0 - (positive + negative))
 
-        scores = {"positive": positive, "negative": negative, "neutral": neutral}
-        top_label = max(scores, key=scores.get)
-        top_score = scores[top_label]
+            scores = {"positive": positive, "negative": negative, "neutral": neutral}
+            top_label = max(scores, key=scores.get)
+            top_score = scores[top_label]
 
-        return {
-            "primary": {
-                "positive": positive,
-                "negative": negative,
-                "neutral": neutral,
-                "label": top_label,
-                "confidence": float(top_score),
-            },
-            "signals": {"positive": {}, "negative": {}, "neutral": {}},
-        }
+            results[idx] = {
+                "primary": {
+                    "positive": positive,
+                    "negative": negative,
+                    "neutral": neutral,
+                    "label": top_label,
+                    "confidence": float(top_score),
+                },
+                "signals": {"positive": {}, "negative": {}, "neutral": {}},
+            }
+
+        return results
 
 
 @lru_cache(maxsize=None)

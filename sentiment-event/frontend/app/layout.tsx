@@ -13,7 +13,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Bluberri Product Pulse",
+  title: "bluberri Product Pulse",
   description:
     "Understand how customers across the globe feel about your products and feature launches with sentiment and emotion analytics.",
 };

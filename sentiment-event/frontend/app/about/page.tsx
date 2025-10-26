@@ -2,19 +2,34 @@ import Link from "next/link";
 
 const principles = [
   {
-    title: "Customer-first evidence",
+    title: "Multi-Platform Analysis",
     description:
-      "Every insight ties back to a real post. Keep links and metadata intact so product squads can drill into authentic conversations.",
+      "Collect and analyze authentic conversations from Twitter, Reddit, and Facebook. Access diverse perspectives from multiple social media communities in one unified analysis.",
   },
   {
-    title: "Emotion explains impact",
+    title: "AI-Powered Insights",
     description:
-      "Primary sentiment is just the start. We surface the emotions driving delight, concern, or anticipation around every release.",
+      "Advanced sentiment analysis powered by machine learning models and Google Gemini AI. Get detailed emotion breakdowns including joy, trust, desire, anger, concern, and more.",
   },
   {
-    title: "Built for product velocity",
+    title: "Real-Time Understanding",
     description:
-      "Growth and CX teams deserve tooling they can act on. Bluberri keeps the interface clear so you can iterate without slowing down.",
+      "Track sentiment as it evolves. Analyze trending topics, product launches, or any subject of interest with up-to-date data from social media platforms.",
+  },
+  {
+    title: "Educational Tool",
+    description:
+      "Perfect for teaching data science, sentiment analysis, and social media research. Students and educators can explore real-world applications of natural language processing.",
+  },
+  {
+    title: "Research Ready",
+    description:
+      "Export detailed CSV reports with full sentiment scores and metadata. Built for academic research, market analysis, and data-driven decision making.",
+  },
+  {
+    title: "Open Source",
+    description:
+      "Built at Cal Hacks with transparency in mind. Review the methodology, understand the algorithms, and explore how sentiment analysis works under the hood.",
   },
 ];
 
@@ -23,19 +38,25 @@ export default function AboutPage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading hero-title fade-up">About Bluberri</h1>
+          <h1 className="section-heading hero-title fade-up">About bluberri</h1>
           <p className="section-subtitle fade-up delay-1">
-            Bluberri began at Cal Hacks as a blueberry-blue control room for product sentiment. From hardware drops to SaaS rollouts,
-            we translate global discourse into a living mood board that keeps launch teams aligned.
+            bluberri is a sentiment analysis platform that helps you understand what people really think about any topic.
+            Built at Cal Hacks, it combines social media data from multiple platforms with AI-powered analysis to reveal
+            authentic public sentiment and emotions. Whether you're a student, researcher, educator, or business professional,
+            bluberri provides the tools to analyze and understand social media conversations at scale.
           </p>
         </header>
+
+        <h2 className="section-heading fade-up" style={{ marginTop: "3rem", fontSize: "1.8rem" }}>
+          What makes bluberri different
+        </h2>
 
         <div className="feature-grid">
           {principles.map((item, index) => (
             <article
               key={item.title}
               className="feature-card fade-up"
-              style={{ animationDelay: `${0.12 * index + 0.1}s` }}
+              style={{ animationDelay: `${0.08 * index + 0.1}s` }}
             >
               <h3>{item.title}</h3>
               <p>{item.description}</p>
@@ -43,9 +64,12 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <div className="hero-actions fade-up delay-2">
+        <div className="hero-actions fade-up delay-2" style={{ marginTop: "3rem" }}>
           <Link href="/analyze" className="button-primary">
-            View usage guide & analyzer
+            Start analyzing
+          </Link>
+          <Link href="/docs" className="button-secondary">
+            View documentation
           </Link>
         </div>
       </section>

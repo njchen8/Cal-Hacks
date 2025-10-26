@@ -38,8 +38,9 @@ class Settings:
         f"sqlite:///{(base_dir / 'data' / 'tweets.db').as_posix()}",
     )
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
-    scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
+    scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "180"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
+    sentiment_batch_size: int = max(1, int(os.getenv("SENTIMENT_BATCH_SIZE", "8")))
 
     # Twitter API credentials (Twikit manual scraper - main implementation)
     twitter_cookie_header: Optional[str] = os.getenv("TWITTER_COOKIE_HEADER")
@@ -70,6 +71,12 @@ class Settings:
     # Lava Gateway API credentials (for LLM-powered sentiment summaries)
     lava_api_key: Optional[str] = os.getenv("LAVA_API_KEY")
     lava_base_url: str = os.getenv("LAVA_BASE_URL", "https://api.lavagateway.com/v1")
+    gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+
+    # Facebook API credentials (alternative source)
+    facebook_access_token: Optional[str] = os.getenv("FACEBOOK_ACCESS_TOKEN")
+    facebook_app_id: Optional[str] = os.getenv("FACEBOOK_APP_ID")
+    facebook_app_secret: Optional[str] = os.getenv("FACEBOOK_APP_SECRET")
 
     @property
     def sqlite_path(self) -> Path:

@@ -4,13 +4,16 @@ import { FormEvent, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { StoredContentResponse } from "@/types/sentiment";
 
-const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
-
 export default function AnalyzePage() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<StoredContentResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const [lavaSummary, setLavaSummary] = useState<string | null>(null);
+  const [progressStep, setProgressStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(25);
+  const [insightSummary, setInsightSummary] = useState<string | null>(null);
+  const [insightMetadata, setInsightMetadata] = useState<{ keyword: string; csvPath?: string; summaryPath?: string } | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeEngine, setActiveEngine] = useState<"default" | "fast">("default");
@@ -33,8 +36,10 @@ export default function AnalyzePage() {
     setActiveEngine(engine);
     setError(null);
     setLogs([]);
-  setLavaSummary(null);
-    setResult(null);
+    setProgressStep(0);
+  setInsightSummary(null);
+  setResult(null);
+  setInsightMetadata(null);
 
     try {
       const response = await fetch("/api/analyze", {
@@ -94,15 +99,38 @@ export default function AnalyzePage() {
 
       const handleEventLine = (rawLine: string): boolean => {
         try {
-          const event = JSON.parse(rawLine) as { type: string; message?: string; payload?: StoredContentResponse };
+          const event = JSON.parse(rawLine) as {
+            type: string;
+            message?: string | { text: string; keyword: string; csvPath?: string; summaryPath?: string };
+            payload?: StoredContentResponse;
+          };
           if (event.type === "log" && typeof event.message === "string") {
             const message = event.message;
             setLogs((prev) => [...prev, message]);
+            setProgressStep((prev) => Math.min(prev + 1, totalSteps));
             updateFallbackSummary(message);
             return true;
           }
-          if (event.type === "lava" && typeof event.message === "string") {
-            setLavaSummary(event.message.trim());
+          if (event.type === "lava" || event.type === "gemini") {
+            if (typeof event.message === "string") {
+              setInsightSummary(event.message.trim());
+              return true;
+            }
+
+            if (event.message && typeof event.message === "object") {
+              const { text, keyword: kw, csvPath, summaryPath } = event.message;
+              if (typeof text === "string") {
+                setInsightSummary(text.trim());
+              }
+              if (typeof kw === "string" || csvPath || summaryPath) {
+                setInsightMetadata({
+                  keyword: typeof kw === "string" ? kw : input,
+                  csvPath: typeof csvPath === "string" ? csvPath : undefined,
+                  summaryPath: typeof summaryPath === "string" ? summaryPath : undefined,
+                });
+              }
+              return true;
+            }
             return true;
           }
           if (event.type === "summary" && event.payload) {
@@ -189,31 +217,15 @@ export default function AnalyzePage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading fade-up">Usage guide & live analyzer</h1>
-          <div className="instructions fade-up delay-1">
-            <p>
-              1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
-            </p>
-            <p>
-              2. (Optional) Refresh the dataset by running <code>python main.py run-reddit &quot;your keyword&quot;</code> from
-              the <code>backend</code> directory.
-            </p>
-            <p>
-              &nbsp;&nbsp;&nbsp;Use <code>--engine fast</code> to try the lightweight analyzer variant.
-            </p>
-            <p>
-              3. Enter a keyword below to see how much user content is currently stored for that topic.
-            </p>
-            <p>{examplePrompt}</p>
-          </div>
+          <h1 className="section-heading fade-up">Product Sentiment Analysis</h1>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="product-input">What are we analyzing?</label>
+          <label htmlFor="product-input">Product to analyze</label>
           <textarea
             id="product-input"
             name="product"
-            placeholder="Summarize the product moment you want to measure, like a feature rollout or launch reaction..."
+            placeholder="Enter the product name you want to measure (e.g., AirPods Pro Max, MacBook Air M3, etc.)"
             value={text}
             onChange={(event) => setText(event.target.value)}
             disabled={isLoading}
@@ -233,7 +245,8 @@ export default function AnalyzePage() {
                 setResult(null);
                 setError(null);
                 setLogs([]);
-                setActiveEngine("default");
+                setProgressStep(0);
+                setInsightSummary(null);
               }}
               disabled={isLoading}
             >
@@ -243,48 +256,28 @@ export default function AnalyzePage() {
         </form>
 
         {isLoading && !error && (
-          <div className="status-banner info fade-up" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <div
-              style={{
-                width: "100%",
-                height: "8px",
-                backgroundColor: "var(--surface-muted)",
-                borderRadius: "999px",
-                overflow: "hidden",
-              }}
-            >
+          <div className="status-banner info fade-up">
+            <div className="progress-bar">
               <div
-                className="loading-bar-fill"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  background: "linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%)",
-                }}
+                className="progress-bar__fill"
+                style={{ width: `${Math.min((progressStep / totalSteps) * 100, 100)}%` }}
               />
+              <span className="progress-bar__label">
+                {progressStep}/{totalSteps} complete
+              </span>
             </div>
-            <span>
-              {activeEngine === "fast" ? "Running fast sentiment analyzer…" : "Running full sentiment analyzer…"}
-            </span>
           </div>
         )}
 
         {error && <div className="status-banner error fade-up">{error}</div>}
-        {lavaSummary && (
+        {insightSummary && (
           <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Lava Gateway summary
+              Social Media Sentiments
             </h2>
-            <div className="lava-output">
-              <ReactMarkdown>{lavaSummary}</ReactMarkdown>
+            <div className="insight-output">
+              <ReactMarkdown>{insightSummary}</ReactMarkdown>
             </div>
-          </div>
-        )}
-        {logs.length > 0 && (
-          <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
-            <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Live progress
-            </h2>
-            <pre className="log-window">{logs.join("\n")}</pre>
           </div>
         )}
         {result && !error && (
@@ -310,33 +303,8 @@ export default function AnalyzePage() {
           </div>
         )}
       <style jsx>{`
-        @keyframes bluberriLoading {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(0%);
-          }
-        }
 
-        .loading-bar-fill {
-          transform: translateX(-100%);
-          animation: bluberriLoading 1.2s ease-in-out infinite;
-        }
-
-        .log-window {
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 1rem;
-          font-family: "Fira Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-          font-size: 0.9rem;
-          line-height: 1.4;
-          max-height: 240px;
-          overflow-y: auto;
-          white-space: pre-wrap;
-        }
-
-        .lava-output {
+        .insight-output {
           background: rgba(255, 255, 255, 0.08);
           border-radius: 12px;
           padding: 1.5rem;
@@ -346,7 +314,7 @@ export default function AnalyzePage() {
           color: var(--color-text-primary);
         }
 
-        .lava-output h2 {
+        .insight-output h2 {
           font-size: 1.5rem;
           font-weight: 700;
           margin-top: 1.5rem;
@@ -354,26 +322,60 @@ export default function AnalyzePage() {
           color: var(--color-primary);
         }
 
-        .lava-output h2:first-child {
+        .insight-output h2:first-child {
           margin-top: 0;
         }
 
-        .lava-output p {
+        .insight-output p {
           margin-bottom: 1rem;
         }
 
-        .lava-output strong {
+        .insight-output strong {
           font-weight: 700;
           color: var(--color-primary);
         }
 
-        .lava-output ul {
+        .insight-output ul {
           margin-left: 1.5rem;
           margin-bottom: 1rem;
         }
 
-        .lava-output li {
+        .insight-output li {
           margin-bottom: 0.5rem;
+        }
+
+        .insight-meta {
+          font-size: 0.85rem;
+          color: var(--color-text-secondary);
+          margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+          position: relative;
+          width: 100%;
+          height: 16px;
+          border-radius: 999px;
+          background: linear-gradient(120deg, rgba(79, 134, 247, 0.14), rgba(201, 160, 220, 0.18));
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .progress-bar__fill {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+          transform-origin: left;
+          transition: width 0.35s ease;
+        }
+
+        .progress-bar__label {
+          position: relative;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          text-align: center;
         }
       `}</style>
       </section>

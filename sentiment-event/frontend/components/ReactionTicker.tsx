@@ -11,24 +11,24 @@ type Reaction = {
 
 const reactions: Reaction[] = [
   {
-    quote: "Launch day sentiment spiked 28% after we shipped the new sleep tracking tiles.",
-    product: "DreamBand",
-    source: "Product marketing, Berlin",
+    quote: "Multi-platform sentiment analysis across Twitter, Reddit, and Facebook in real-time.",
+    product: "bluberri",
+    source: "Social Media Intelligence",
   },
   {
-    quote: "Customers love the cleaner checkout, but pricing chatter in Latin America hints at discount fatigue.",
-    product: "LumenPay",
-    source: "Growth analytics, São Paulo",
+    quote: "AI-powered emotion detection reveals joy, trust, desire, anger, and concern in every conversation.",
+    product: "bluberri",
+    source: "Gemini AI Integration",
   },
   {
-    quote: "Influencers call the berry palette 'refreshing' yet a few early adopters ask for darker accessibility options.",
-    product: "Palette OS",
-    source: "Community success, Toronto",
+    quote: "Perfect for students, teachers, researchers analyzing public opinion and social trends.",
+    product: "bluberri",
+    source: "Educational & Research Tool",
   },
   {
-    quote: "Support calls dropped 14% once we patched the onboarding tooltip copy—trust is finally rebuilding.",
-    product: "Beacon CRM",
-    source: "CX ops, Singapore",
+    quote: "Export detailed CSV reports with full sentiment scores and metadata for deeper analysis.",
+    product: "bluberri",
+    source: "Data Export & Insights",
   },
 ];
 

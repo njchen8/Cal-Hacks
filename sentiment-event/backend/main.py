@@ -8,11 +8,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from typing import Any, Dict
 
 from app import settings
 from app.database import init_db
-from app.pipeline import analyze_pending, scrape, scrape_reddit
+from app.pipeline import analyze_pending, scrape, scrape_reddit, scrape_facebook
 from app.scraper import update_export_with_sentiment
 from app.summary import summarize_keyword
 
@@ -70,6 +71,25 @@ def _configure_parser() -> argparse.ArgumentParser:
     run_reddit_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of posts to fetch")
     run_reddit_parser.add_argument("--subreddit", type=str, default="all", help="Subreddit to search (default: all)")
     run_reddit_parser.add_argument(
+        "--engine",
+        choices=ANALYZER_CHOICES,
+        default="default",
+        help="Select sentiment analyzer variant (default or fast).",
+    )
+
+    # =========================================================================
+    # FACEBOOK COMMANDS (Alternative source)
+    # =========================================================================
+    scrape_facebook_parser = subparsers.add_parser("scrape-facebook", help="Scrape Facebook posts for a keyword")
+    scrape_facebook_parser.add_argument("keyword", type=str, help="Keyword or search query")
+    scrape_facebook_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of posts to fetch")
+    scrape_facebook_parser.add_argument("--page-id", type=str, default=None, help="Facebook Page ID to search (optional)")
+
+    run_facebook_parser = subparsers.add_parser("run-facebook", help="Scrape Facebook and analyze in one step")
+    run_facebook_parser.add_argument("keyword", type=str, help="Keyword or search query")
+    run_facebook_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of posts to fetch")
+    run_facebook_parser.add_argument("--page-id", type=str, default=None, help="Facebook Page ID to search (optional)")
+    run_facebook_parser.add_argument(
         "--engine",
         choices=ANALYZER_CHOICES,
         default="default",
@@ -137,7 +157,12 @@ def main(argv: list[str] | None = None) -> int:
                     "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
                     flush=True,
                 )
-                progress_state = {"last": -1, "announced_start": False}
+                progress_state = {
+                    "last": -1,
+                    "announced_start": False,
+                    "last_emit": time.perf_counter(),
+                }
+                heartbeat_interval = 15.0
 
                 def _analyzer_ready(total: int) -> None:
                     if total <= 0:
@@ -148,10 +173,12 @@ def main(argv: list[str] | None = None) -> int:
                     )
 
                 def _progress_callback(done: int, total: int) -> None:
+                    now = time.perf_counter()
                     if total == 0:
                         if progress_state["last"] != 0:
                             print("[4/5] No content pending sentiment analysis.", flush=True)
                             progress_state["last"] = 0
+                            progress_state["last_emit"] = now
                         return
 
                     if not progress_state["announced_start"]:
@@ -160,20 +187,28 @@ def main(argv: list[str] | None = None) -> int:
                             flush=True,
                         )
                         progress_state["announced_start"] = True
+                        progress_state["last_emit"] = now
 
                     segments = 20
                     step = max(1, total // segments)
-                    if done == total or done == 0 or done % step == 0:
-                        if done != progress_state["last"]:
-                            ratio = done / total if total else 0
-                            filled = int(round(ratio * segments))
-                            filled = max(0, min(segments, filled))
-                            bar = "#" * filled + "-" * (segments - filled)
-                            print(
-                                f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
-                                flush=True,
-                            )
-                            progress_state["last"] = done
+                    emit_due_to_step = done % step == 0 or done in (0, total)
+                    early_heartbeat = done <= 5 and done != progress_state["last"]
+                    timed_heartbeat = (now - progress_state["last_emit"]) >= heartbeat_interval
+
+                    if done != progress_state["last"] and (emit_due_to_step or early_heartbeat or timed_heartbeat):
+                        ratio = done / total if total else 0
+                        filled = int(round(ratio * segments))
+                        filled = max(0, min(segments, filled))
+                        bar = "#" * filled + "-" * (segments - filled)
+                        print(
+                            f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
+                            flush=True,
+                        )
+                        progress_state["last"] = done
+                        progress_state["last_emit"] = now
+                    elif timed_heartbeat and done == progress_state["last"]:
+                        print("[4/5] Sentiment analysis still running...", flush=True)
+                        progress_state["last_emit"] = now
 
                 analyzed = analyze_pending(
                     keyword=args.keyword,
@@ -223,7 +258,12 @@ def main(argv: list[str] | None = None) -> int:
                 "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
                 flush=True,
             )
-            progress_state = {"last": -1, "announced_start": False}
+            progress_state = {
+                "last": -1,
+                "announced_start": False,
+                "last_emit": time.perf_counter(),
+            }
+            heartbeat_interval = 15.0
 
             def _analyzer_ready(total: int) -> None:
                 if total <= 0:
@@ -234,10 +274,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
 
             def _progress_callback(done: int, total: int) -> None:
+                now = time.perf_counter()
                 if total == 0:
                     if progress_state["last"] != 0:
                         print("[4/5] No content pending sentiment analysis.", flush=True)
                         progress_state["last"] = 0
+                        progress_state["last_emit"] = now
                     return
 
                 if not progress_state["announced_start"]:
@@ -246,20 +288,28 @@ def main(argv: list[str] | None = None) -> int:
                         flush=True,
                     )
                     progress_state["announced_start"] = True
+                    progress_state["last_emit"] = now
 
                 segments = 20
                 step = max(1, total // segments)
-                if done == total or done == 0 or done % step == 0:
-                    if done != progress_state["last"]:
-                        ratio = done / total if total else 0
-                        filled = int(round(ratio * segments))
-                        filled = max(0, min(segments, filled))
-                        bar = "#" * filled + "-" * (segments - filled)
-                        print(
-                            f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
-                            flush=True,
-                        )
-                        progress_state["last"] = done
+                emit_due_to_step = done % step == 0 or done in (0, total)
+                early_heartbeat = done <= 5 and done != progress_state["last"]
+                timed_heartbeat = (now - progress_state["last_emit"]) >= heartbeat_interval
+
+                if done != progress_state["last"] and (emit_due_to_step or early_heartbeat or timed_heartbeat):
+                    ratio = done / total if total else 0
+                    filled = int(round(ratio * segments))
+                    filled = max(0, min(segments, filled))
+                    bar = "#" * filled + "-" * (segments - filled)
+                    print(
+                        f"[4/5] Sentiment analysis progress: [{bar}] {done}/{total}",
+                        flush=True,
+                    )
+                    progress_state["last"] = done
+                    progress_state["last_emit"] = now
+                elif timed_heartbeat and done == progress_state["last"]:
+                    print("[4/5] Sentiment analysis still running...", flush=True)
+                    progress_state["last_emit"] = now
 
             analyzed = analyze_pending(
                 keyword=args.keyword,
@@ -274,6 +324,47 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[4/5] Analysis complete. Updated {analyzed} content entries.", flush=True)
         except RuntimeError as exc:
             print(f"[!] Reddit pipeline error: {exc}", flush=True)
+
+        _, sample_size, total_content, latest = summarize_keyword(args.keyword, limit=args.limit)
+        if latest:
+            print(f"[5/5] Latest content entry recorded at {latest.isoformat()}.", flush=True)
+        print(f"{total_content} content entries currently stored for '{args.keyword}'.", flush=True)
+        print(
+            f"Most recent summary used {sample_size} content entries that already have sentiment scores.",
+            flush=True,
+        )
+        return 0
+
+    # ============================================================================
+    # FACEBOOK COMMAND HANDLERS (Alternative source)
+    # ============================================================================
+    if args.command == "scrape-facebook":
+        page_display = f" from page {args.page_id}" if args.page_id else ""
+        stored = scrape_facebook(args.keyword, limit=args.limit, page_id=args.page_id)
+        print(f"Stored {stored} new Facebook posts for '{args.keyword}'{page_display}.")
+        return 0
+
+    if args.command == "run-facebook":
+        page_display = f" from page {args.page_id}" if args.page_id else ""
+        print(f"[1/5] Starting Facebook refresh for '{args.keyword}'{page_display}.", flush=True)
+        stored = 0
+        analyzed = 0
+        try:
+            print("[2/5] Scraping Facebook posts via Graph API...", flush=True)
+            stored = scrape_facebook(args.keyword, limit=args.limit, page_id=args.page_id)
+            print(
+                f"[3/5] Stored {stored} new Facebook posts for '{args.keyword}'{page_display}.",
+                flush=True,
+            )
+
+            print(
+                "[4/5] Preparing sentiment analyzer (first run may take a minute)...",
+                flush=True,
+            )
+            analyzed = analyze_pending(keyword=args.keyword, variant=args.engine)
+            print(f"[4/5] Analysis complete. Updated {analyzed} content entries.", flush=True)
+        except RuntimeError as exc:
+            print(f"[!] Facebook pipeline error: {exc}", flush=True)
 
         _, sample_size, total_content, latest = summarize_keyword(args.keyword, limit=args.limit)
         if latest:
