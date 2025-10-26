@@ -22,7 +22,7 @@ class GeminiSummarizer:
             api_key: Google Gemini API key (defaults to GEMINI_API_KEY env var)
         """
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY must be set in environment or passed to constructor")
