@@ -41,11 +41,13 @@ class SentimentAnalyzer:
             task="sentiment-analysis",
             model=PRIMARY_MODEL,
             tokenizer=PRIMARY_MODEL,
+            cache_dir=str(settings.model_cache_dir),
         )
         self._emotion_pipeline = pipeline(
             task="zero-shot-classification",
             model=EMOTION_MODEL,
             multi_label=True,
+            cache_dir=str(settings.model_cache_dir),
         )
 
     def analyze(self, text: str) -> Dict[str, Dict[str, float]]:

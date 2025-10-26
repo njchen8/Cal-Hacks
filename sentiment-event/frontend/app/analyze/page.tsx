@@ -1,14 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import SentimentSummary from "@/components/SentimentSummary";
-import type { SentimentResponse, SentimentApiError } from "@/types/sentiment";
+import type { StoredTweetsResponse, SentimentApiError } from "@/types/sentiment";
 
 const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
 
 export default function AnalyzePage() {
   const [text, setText] = useState("");
-  const [result, setResult] = useState<SentimentResponse | null>(null);
+  const [result, setResult] = useState<StoredTweetsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,14 +30,14 @@ export default function AnalyzePage() {
         body: JSON.stringify({ keyword: input }),
       });
 
-      const payload = (await response.json()) as SentimentResponse | SentimentApiError;
+  const payload = (await response.json()) as StoredTweetsResponse | SentimentApiError;
 
       if (!response.ok || "error" in payload) {
         const message = "error" in payload ? payload.error : "Unable to fetch sentiment analysis.";
         throw new Error(message);
       }
 
-      setResult(payload as SentimentResponse);
+  setResult(payload as StoredTweetsResponse);
     } catch (err) {
       const fallback = err instanceof Error ? err.message : "Unexpected error. Please try again.";
       setError(fallback);
@@ -55,14 +54,14 @@ export default function AnalyzePage() {
           <h1 className="section-heading fade-up">Usage guide & live analyzer</h1>
           <div className="instructions fade-up delay-1">
             <p>
-              1. Make sure the Python backend is running with an endpoint that accepts <code>POST /analyze</code> and
-              returns the sentiment payload described in <code>backend/app/sentiment.py</code>.
+              1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
             </p>
             <p>
-              2. Set the <code>BACKEND_API_URL</code> environment variable for this Next.js app so the proxy knows where to send requests.
+              2. (Optional) Refresh the dataset by running <code>python main.py run &quot;your keyword&quot;</code> from the
+              <code>backend</code> directory.
             </p>
             <p>
-              3. Describe a product launch, feature update, or customer conversation in the text area below, then submit to see headline sentiment and supporting emotions.
+              3. Enter a keyword below to see how many tweets are currently stored for that topic.
             </p>
             <p>{examplePrompt}</p>
           </div>
@@ -100,11 +99,24 @@ export default function AnalyzePage() {
         {error && <div className="status-banner error fade-up">{error}</div>}
         {result && !error && (
           <div className="fade-up" style={{ animationDelay: "0.15s" }}>
-            <h2 className="section-heading">Sentiment breakdown</h2>
-            <p className="section-subtitle">
-              Primary sentiment probabilities are paired with supporting emotion cues. Use both to understand how people feel and why the tone might shift.
-            </p>
-            <SentimentSummary result={result} />
+            <h2 className="section-heading">Stored tweet count</h2>
+            <p className="section-subtitle">{result.message}</p>
+            <div className="feature-grid">
+              <article className="feature-card">
+                <h3>Total stored tweets</h3>
+                <p>{result.storedTweets}</p>
+              </article>
+              <article className="feature-card">
+                <h3>Analyzed sample size</h3>
+                <p>{result.sampleSize}</p>
+              </article>
+              {result.latestTweetAt && (
+                <article className="feature-card">
+                  <h3>Latest tweet recorded</h3>
+                  <p>{new Date(result.latestTweetAt).toLocaleString()}</p>
+                </article>
+              )}
+            </div>
           </div>
         )}
       </section>

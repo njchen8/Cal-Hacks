@@ -3,51 +3,34 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Optional
+import subprocess
+import sys
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from .database import init_db
-from .pipeline import scrape_and_analyze
 from .summary import summarize_keyword
 
 app = FastAPI(title="Sentiment Event API", version="1.0.0")
 
-
-class SentimentPrimaryModel(BaseModel):
-    positive: float
-    negative: float
-    neutral: float
-    label: str
-    confidence: float
-
-
-class SentimentSignalsModel(BaseModel):
-    positive: Dict[str, float]
-    negative: Dict[str, float]
-    neutral: Dict[str, float]
-
-
-class SentimentMetaModel(BaseModel):
-    keyword: str
-    sampleSize: int = Field(..., ge=0)
-    totalTweets: int = Field(..., ge=0)
-    newlyScraped: int = Field(..., ge=0)
-    newlyAnalyzed: int = Field(..., ge=0)
-    latestTweetAt: Optional[datetime] = None
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
 class AnalyzeResponseModel(BaseModel):
-    primary: SentimentPrimaryModel
-    signals: SentimentSignalsModel
-    meta: SentimentMetaModel
+    keyword: str
+    storedTweets: int = Field(..., ge=0)
+    sampleSize: int = Field(..., ge=0)
+    latestTweetAt: Optional[datetime] = None
+    message: str
 
 
 class AnalyzeRequestModel(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=280)
     limit: Optional[int] = Field(None, ge=1, le=500)
-    refresh: bool = True
+    refresh: bool = False
 
 
 @app.on_event("startup")
@@ -61,30 +44,43 @@ def analyze_keyword(payload: AnalyzeRequestModel) -> AnalyzeResponseModel:
     if not keyword:
         raise HTTPException(status_code=400, detail="Keyword must not be empty.")
 
-    stored = analyzed = 0
+    cli_output = ""
     if payload.refresh:
-        try:
-            stored, analyzed = scrape_and_analyze(keyword, limit=payload.limit)
-        except RuntimeError as exc:
-            # Swallow transient scraping issues (e.g., search returning 404) and fall back to stored data.
-            stored = analyzed = 0
+        command = [
+            sys.executable,
+            str(BACKEND_ROOT / "main.py"),
+            "run",
+            keyword,
+        ]
+        if payload.limit:
+            command.extend(["--limit", str(payload.limit)])
 
-    summary, sample_size, total_tweets, latest_tweet_at = summarize_keyword(keyword, limit=payload.limit)
+        result = subprocess.run(
+            command,
+            cwd=str(BACKEND_ROOT),
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            detail = result.stderr.strip() or "Backend command failed."
+            raise HTTPException(status_code=500, detail=detail)
+
+        cli_output = result.stdout.strip()
+
+    _, sample_size, total_tweets, latest_tweet_at = summarize_keyword(keyword, limit=payload.limit)
+
+    message = cli_output or f"{total_tweets} tweets currently stored for '{keyword}'."
 
     return AnalyzeResponseModel(
-        primary=SentimentPrimaryModel(**summary["primary"]),
-        signals=SentimentSignalsModel(**summary["signals"]),
-        meta=SentimentMetaModel(
-            keyword=keyword,
-            sampleSize=sample_size,
-            totalTweets=total_tweets,
-            newlyScraped=stored,
-            newlyAnalyzed=analyzed,
-            latestTweetAt=latest_tweet_at,
-        ),
+        keyword=keyword,
+        storedTweets=total_tweets,
+        sampleSize=sample_size,
+        latestTweetAt=latest_tweet_at,
+        message=message,
     )
 
 
 @app.get("/healthz")
-def healthcheck() -> Dict[str, str]:
+def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
