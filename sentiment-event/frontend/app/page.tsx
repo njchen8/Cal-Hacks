@@ -32,6 +32,16 @@ const featureItems = [
     description:
       "Explore emerging topics and understand public discourse. Discover what people are excited, concerned, or talking about right now.",
   },
+  {
+    title: "Policy Making Impact",
+    description:
+      "Insights from sentiment analysis can inform policy decisions, helping leaders address public concerns and shape effective strategies.",
+  },
+  {
+    title: "Social Impact & Welfare",
+    description:
+      "Understanding social sentiment enables organizations to better support community welfare, identify emerging issues, and drive positive change.",
+  },
 ];
 
 export default function HomePage() {

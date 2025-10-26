@@ -217,11 +217,11 @@ export default function AnalyzePage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading fade-up">Product Sentiment Analysis</h1>
+          <h1 className="section-heading fade-up">bluberrier</h1>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="product-input">Product to analyze</label>
+          <label htmlFor="product-input">Topic to analyze</label>
           <textarea
             id="product-input"
             name="product"
@@ -299,6 +299,18 @@ export default function AnalyzePage() {
                   <p>{new Date(result.latestContentAt).toLocaleString()}</p>
                 </article>
               )}
+              <article className="feature-card">
+                <h3>Policy Making Impact</h3>
+                <p>
+                  Insights from sentiment analysis can inform policy decisions, helping leaders address public concerns and shape effective strategies.
+                </p>
+              </article>
+              <article className="feature-card">
+                <h3>Social Impact & Welfare</h3>
+                <p>
+                  Understanding social sentiment enables organizations to better support community welfare, identify emerging issues, and drive positive change.
+                </p>
+              </article>
             </div>
           </div>
         )}
