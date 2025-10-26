@@ -22,22 +22,47 @@ export async function POST(request: NextRequest) {
       backendUrl = backendUrl.replace("0.0.0.0", "127.0.0.1");
     }
 
-    const target = `${backendUrl}/analyze`;
+    const target = `${backendUrl}/analyze/stream`;
 
-    const response = await fetch(target, {
+    const backendResponse = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keyword, limit, refresh }),
       cache: "no-store",
     });
 
-    if (!response.ok) {
-      const message = await safeReadError(response);
-      return NextResponse.json({ error: message }, { status: response.status });
+    if (!backendResponse.ok || !backendResponse.body) {
+      const message = await safeReadError(backendResponse);
+      return NextResponse.json({ error: message }, { status: backendResponse.status });
     }
 
-    const payload = await response.json();
-    return NextResponse.json(payload);
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = backendResponse.body!.getReader();
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+              break;
+            }
+            if (value) {
+              controller.enqueue(value);
+            }
+          }
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    const contentType = backendResponse.headers.get("content-type") ?? "application/x-ndjson";
+    return new NextResponse(stream, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Dict
 
-from transformers import pipeline
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
 from .config import settings
 
@@ -34,20 +34,39 @@ SIGNAL_POLARITY = {
 
 
 class SentimentAnalyzer:
-    """Wrapper around transformer pipelines for tweet analysis."""
+    """Wrapper around transformer pipelines for user content analysis."""
 
     def __init__(self) -> None:
+        # Manually load transformers objects so cache_dir does not leak into tokenizer kwargs.
+        sentiment_model = AutoModelForSequenceClassification.from_pretrained(
+            PRIMARY_MODEL,
+            cache_dir=str(settings.model_cache_dir),
+        )
+        sentiment_tokenizer = AutoTokenizer.from_pretrained(
+            PRIMARY_MODEL,
+            cache_dir=str(settings.model_cache_dir),
+            use_fast=True,
+        )
         self._sentiment_pipeline = pipeline(
             task="sentiment-analysis",
-            model=PRIMARY_MODEL,
-            tokenizer=PRIMARY_MODEL,
+            model=sentiment_model,
+            tokenizer=sentiment_tokenizer,
+        )
+
+        emotion_model = AutoModelForSequenceClassification.from_pretrained(
+            EMOTION_MODEL,
             cache_dir=str(settings.model_cache_dir),
+        )
+        emotion_tokenizer = AutoTokenizer.from_pretrained(
+            EMOTION_MODEL,
+            cache_dir=str(settings.model_cache_dir),
+            use_fast=True,
         )
         self._emotion_pipeline = pipeline(
             task="zero-shot-classification",
-            model=EMOTION_MODEL,
+            model=emotion_model,
+            tokenizer=emotion_tokenizer,
             multi_label=True,
-            cache_dir=str(settings.model_cache_dir),
         )
 
     def analyze(self, text: str) -> Dict[str, Dict[str, float]]:
@@ -72,7 +91,7 @@ class SentimentAnalyzer:
         emotion_result = self._emotion_pipeline(
             sequences=text,
             candidate_labels=EMOTION_LABELS,
-            hypothesis_template="The tweet expresses {} emotion.",
+            hypothesis_template="The content expresses {} emotion.",
         )
 
         signal_payload: Dict[str, Dict[str, float]] = {"positive": {}, "negative": {}, "neutral": {}}
