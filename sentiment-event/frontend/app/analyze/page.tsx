@@ -263,7 +263,7 @@ export default function AnalyzePage() {
                 style={{ width: `${Math.min((progressStep / totalSteps) * 100, 100)}%` }}
               />
               <span className="progress-bar__label">
-                {progressStep}/{totalSteps} complete
+                {Math.round((progressStep / totalSteps) * 100)}% complete
               </span>
             </div>
           </div>
