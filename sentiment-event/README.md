@@ -56,5 +56,3 @@ npm run dev
 ```
 
 Set `BACKEND_API_URL` in the frontend environment (or `.env.local`) to the FastAPI URL. The proxy defaults to `http://localhost:8000` for local development.
-
-Once the API is running, open the analyzer page in the frontend and enter a keyword to view how many tweets are currently stored in the SQLite database for that term. Run `python main.py run "your keyword"` (from the `backend` directory) whenever you want to refresh the stored data before checking the count.
