@@ -221,14 +221,22 @@ export default function AnalyzePage() {
               1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
             </p>
             <p>
-              2. (Optional) Refresh the dataset by running <code>python main.py run-reddit &quot;your keyword&quot;</code> from
-              the <code>backend</code> directory.
+              2. Scrape data from Twitter, Reddit, or Facebook:
             </p>
             <p>
-              &nbsp;&nbsp;&nbsp;Use <code>--engine fast</code> to try the lightweight analyzer variant.
+              &nbsp;&nbsp;&nbsp;<code>python main.py run &quot;keyword&quot;</code> (Twitter)
             </p>
             <p>
-              3. Enter a keyword below to see how much user content is currently stored for that topic.
+              &nbsp;&nbsp;&nbsp;<code>python main.py run-reddit &quot;keyword&quot;</code> (Reddit)
+            </p>
+            <p>
+              &nbsp;&nbsp;&nbsp;<code>python main.py run-facebook &quot;keyword&quot; --page-id PAGE_ID</code> (Facebook)
+            </p>
+            <p>
+              &nbsp;&nbsp;&nbsp;Add <code>--engine fast</code> for lightweight sentiment analysis.
+            </p>
+            <p>
+              3. Enter a keyword below to analyze stored content and generate AI summaries via Gemini.
             </p>
             <p>{examplePrompt}</p>
           </div>
@@ -298,7 +306,7 @@ export default function AnalyzePage() {
         {lavaSummary && (
           <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Lava Gateway summary
+              Gemini AI summary
             </h2>
             <div className="lava-output">
               {lavaMetadata && (
