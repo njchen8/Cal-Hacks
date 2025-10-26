@@ -1,5 +1,8 @@
+'use client';
+
 import Link from "next/link";
 import ReactionTicker from "@/components/ReactionTicker";
+import { useEffect, useState } from "react";
 
 const featureItems = [
   {
@@ -35,9 +38,32 @@ const featureItems = [
 ];
 
 export default function HomePage() {
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const maxScroll = 800;
+      const progress = Math.min(scrollY / maxScroll, 1);
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="page">
-      <section className="main-hero">
+      <section 
+        className="main-hero"
+        style={{
+          opacity: Math.max(0, Math.min(1, (scrollProgress - 0.85) / 0.15)),
+          transform: `translateY(${(1 - Math.max(0, Math.min(1, (scrollProgress - 0.85) / 0.15))) * 100}px)`,
+          transition: 'opacity 0.3s ease, transform 0.3s ease',
+        }}
+      >
         <div className="hero-copy">
           <h1 className="hero-title fade-up">Understand what people really think</h1>
           <p className="fade-up delay-1">
