@@ -15,18 +15,27 @@ from app.config import settings
 class LavaGatewaySummarizer:
     """Analyzes sentiment CSV data and generates professional text summaries using Lava Gateway."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None,
+                 connection_secret: str | None = None, product_secret: str | None = None):
         """Initialize the Lava Gateway summarizer.
 
         Args:
             api_key: Lava Gateway API key (defaults to LAVA_API_KEY env var)
             base_url: Lava Gateway API base URL (defaults to LAVA_BASE_URL env var)
+            connection_secret: Lava Gateway connection secret (defaults to LAVA_CONNECTION_SECRET env var)
+            product_secret: Lava Gateway product secret (defaults to LAVA_PRODUCT_SECRET env var)
         """
         self.api_key = api_key or os.getenv("LAVA_API_KEY")
-        self.base_url = base_url or os.getenv("LAVA_BASE_URL", "https://api.lavagateway.com/v1")
+        self.connection_secret = connection_secret or os.getenv("LAVA_CONNECTION_SECRET")
+        self.product_secret = product_secret or os.getenv("LAVA_PRODUCT_SECRET")
+        self.base_url = base_url or os.getenv("LAVA_BASE_URL", "https://api.lavapayments.com/v1/forward?u=https://api.openai.com/v1")
 
         if not self.api_key:
             raise ValueError("LAVA_API_KEY must be set in environment or passed to constructor")
+        if not self.connection_secret:
+            raise ValueError("LAVA_CONNECTION_SECRET must be set in environment or passed to constructor")
+        if not self.product_secret:
+            raise ValueError("LAVA_PRODUCT_SECRET must be set in environment or passed to constructor")
 
     def read_csv(self, csv_path: str | Path) -> List[Dict[str, Any]]:
         """Read sentiment CSV file and return parsed data.
@@ -220,18 +229,29 @@ Write this as clear, professional prose suitable for a business report. Avoid li
 
         return prompt
 
-    def call_lava_gateway(self, prompt: str, model: str = "meta-llama/Llama-3.3-70B-Instruct") -> str:
+    def call_lava_gateway(self, prompt: str, model: str = "gpt-4o-mini") -> str:
         """Call Lava Gateway API to generate the summary.
 
         Args:
             prompt: The analysis prompt
-            model: The model to use (default: Llama-3.3-70B-Instruct)
+            model: The model to use (default: gpt-4o-mini via OpenAI)
 
         Returns:
             Generated summary text
         """
+        # Lava Gateway uses a combined bearer token with all three secrets (base64 encoded)
+        import json as json_lib
+        import base64
+
+        auth_data = json_lib.dumps({
+            "secret_key": self.api_key,
+            "connection_secret": self.connection_secret,
+            "product_secret": self.product_secret
+        })
+        auth_token = base64.b64encode(auth_data.encode()).decode()
+
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {auth_token}",
             "Content-Type": "application/json"
         }
 
@@ -249,8 +269,9 @@ Write this as clear, professional prose suitable for a business report. Avoid li
         }
 
         try:
+            # Lava Gateway base URL already includes /chat/completions path
             response = requests.post(
-                f"{self.base_url}/chat/completions",
+                self.base_url,
                 headers=headers,
                 json=payload,
                 timeout=120
@@ -261,13 +282,18 @@ Write this as clear, professional prose suitable for a business report. Avoid li
             return result['choices'][0]['message']['content']
 
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Lava Gateway API call failed: {e}")
+            error_detail = ""
+            try:
+                error_detail = f"\nResponse body: {response.text}"
+            except:
+                pass
+            raise RuntimeError(f"Lava Gateway API call failed: {e}{error_detail}")
 
     def generate_summary(
         self,
         csv_path: str | Path,
         output_path: str | Path | None = None,
-        model: str = "meta-llama/Llama-3.3-70B-Instruct"
+        model: str = "gpt-4o-mini"
     ) -> str:
         """Generate a complete sentiment summary report.
 
@@ -319,8 +345,8 @@ def main():
     parser.add_argument(
         "--model", "-m",
         type=str,
-        default="meta-llama/Llama-3.3-70B-Instruct",
-        help="Lava Gateway model to use"
+        default="gpt-4o-mini",
+        help="OpenAI model to use via Lava Gateway (default: gpt-4o-mini)"
     )
     parser.add_argument(
         "--api-key",
