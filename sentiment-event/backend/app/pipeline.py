@@ -11,6 +11,7 @@ from .database import get_session
 from .models import Tweet
 from .scraper import ScrapeResult, scrape_and_persist, update_export_with_sentiment
 from . import scraper_reddit
+from . import scraper_facebook
 from .sentiment import get_analyzer
 
 
@@ -113,5 +114,44 @@ def scrape_and_analyze_reddit(
         Tuple of (posts stored, posts analyzed)
     """
     stored = scrape_reddit(keyword, limit=limit, subreddit=subreddit)
+    analyzed = analyze_pending(keyword=keyword, variant=variant)
+    return stored, analyzed
+
+
+# ============================================================================
+# FACEBOOK-SPECIFIC PIPELINE FUNCTIONS (Alternative source)
+# ============================================================================
+
+def scrape_facebook(keyword: str, limit: Optional[int] = None, page_id: str | None = None) -> int:
+    """Scrape new Facebook posts for a keyword and persist them (Facebook source).
+
+    Args:
+        keyword: Search term
+        limit: Max posts to fetch
+        page_id: Optional Facebook page ID to search
+
+    Returns:
+        Number of new posts stored
+    """
+    return scraper_facebook.scrape_and_persist(keyword, limit=limit or settings.scrape_limit, page_id=page_id)
+
+
+def scrape_and_analyze_facebook(
+    keyword: str,
+    limit: Optional[int] = None,
+    page_id: str | None = None,
+    variant: str = "default",
+) -> tuple[int, int]:
+    """Scrape Facebook posts and immediately analyze the new content (Facebook source).
+
+    Args:
+        keyword: Search term
+        limit: Max posts to fetch
+        page_id: Optional Facebook page ID to search
+
+    Returns:
+        Tuple of (posts stored, posts analyzed)
+    """
+    stored = scrape_facebook(keyword, limit=limit, page_id=page_id)
     analyzed = analyze_pending(keyword=keyword, variant=variant)
     return stored, analyzed

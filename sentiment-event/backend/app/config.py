@@ -71,6 +71,11 @@ class Settings:
     lava_api_key: Optional[str] = os.getenv("LAVA_API_KEY")
     lava_base_url: str = os.getenv("LAVA_BASE_URL", "https://api.lavagateway.com/v1")
 
+    # Facebook API credentials (alternative source)
+    facebook_access_token: Optional[str] = os.getenv("FACEBOOK_ACCESS_TOKEN")
+    facebook_app_id: Optional[str] = os.getenv("FACEBOOK_APP_ID")
+    facebook_app_secret: Optional[str] = os.getenv("FACEBOOK_APP_SECRET")
+
     @property
     def sqlite_path(self) -> Path:
         """Return the sqlite file path when using the local sqlite URL."""
