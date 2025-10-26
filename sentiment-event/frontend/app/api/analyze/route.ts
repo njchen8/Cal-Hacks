@@ -8,7 +8,9 @@ export async function POST(request: NextRequest) {
     const keyword = typeof body?.keyword === "string" ? body.keyword.trim() : "";
     const limit =
       typeof body?.limit === "number" && Number.isFinite(body.limit) ? Math.max(1, Math.floor(body.limit)) : undefined;
-    const refresh = body?.refresh !== undefined ? Boolean(body.refresh) : true;
+  const refresh = body?.refresh !== undefined ? Boolean(body.refresh) : true;
+  const requestedEngine = typeof body?.engine === "string" ? body.engine.toLowerCase() : "default";
+  const engine = requestedEngine === "fast" ? "fast" : "default";
 
     if (!keyword) {
       return NextResponse.json({ error: "The 'keyword' field is required." }, { status: 400 });
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     const backendResponse = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword, limit, refresh }),
+  body: JSON.stringify({ keyword, limit, refresh, engine }),
       cache: "no-store",
     });
 

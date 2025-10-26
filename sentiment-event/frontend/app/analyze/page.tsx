@@ -11,9 +11,15 @@ export default function AnalyzePage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeEngine, setActiveEngine] = useState<"default" | "fast">("default");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+  const nativeEvent = event.nativeEvent as Event & { submitter?: EventTarget | null };
+  const submitter = (nativeEvent?.submitter ?? null) as HTMLElement | null;
+    const engineAttr = submitter?.getAttribute("data-engine");
+    const engine: "default" | "fast" = engineAttr === "fast" ? "fast" : "default";
+
     const input = text.trim();
     if (!input) {
       setError("Please describe a product, feature, or campaign to analyze.");
@@ -22,6 +28,7 @@ export default function AnalyzePage() {
     }
 
     setIsLoading(true);
+    setActiveEngine(engine);
     setError(null);
     setLogs([]);
     setResult(null);
@@ -30,7 +37,7 @@ export default function AnalyzePage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword: input }),
+        body: JSON.stringify({ keyword: input, engine }),
       });
 
       if (!response.ok || !response.body) {
@@ -44,6 +51,64 @@ export default function AnalyzePage() {
   let summaryPayload: StoredContentResponse | null = null;
   let fallbackSummary: Partial<StoredContentResponse> | null = null;
 
+      const yieldToBrowser = async () =>
+        new Promise<void>((resolve) => {
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            window.requestAnimationFrame(() => resolve());
+          } else {
+            setTimeout(() => resolve(), 0);
+          }
+        });
+
+      const updateFallbackSummary = (message: string) => {
+        const storedMatch = message.match(/^([0-9]+)\s+content entries currently stored for '(.+)'\.?$/i);
+        if (storedMatch) {
+          const [, total, keywordFromLog] = storedMatch;
+          fallbackSummary = {
+            ...(fallbackSummary ?? {}),
+            storedContent: Number(total),
+            keyword: keywordFromLog,
+            message,
+          };
+        }
+
+        const sampleMatch = message.match(/Most recent summary used\s+([0-9]+)\s+content entries/i);
+        if (sampleMatch) {
+          fallbackSummary = {
+            ...(fallbackSummary ?? {}),
+            sampleSize: Number(sampleMatch[1]),
+          };
+        }
+
+        const latestMatch = message.match(/Latest content entry recorded at\s+(.+)\.?$/i);
+        if (latestMatch) {
+          fallbackSummary = {
+            ...(fallbackSummary ?? {}),
+            latestContentAt: latestMatch[1],
+          };
+        }
+      };
+
+      const handleEventLine = (rawLine: string): boolean => {
+        try {
+          const event = JSON.parse(rawLine) as { type: string; message?: string; payload?: StoredContentResponse };
+          if (event.type === "log" && typeof event.message === "string") {
+            const message = event.message;
+            setLogs((prev) => [...prev, message]);
+            updateFallbackSummary(message);
+            return true;
+          }
+          if (event.type === "summary" && event.payload) {
+            summaryPayload = event.payload;
+          } else if (event.type === "error" && typeof event.message === "string") {
+            throw new Error(event.message);
+          }
+        } catch (parseError) {
+          // Ignore partial JSON fragments; they will be retried once more data arrives.
+        }
+        return false;
+      };
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) {
@@ -53,101 +118,51 @@ export default function AnalyzePage() {
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
 
+        let appendedLog = false;
+
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) {
             continue;
           }
+          appendedLog = handleEventLine(trimmed) || appendedLog;
+        }
 
-          const event = JSON.parse(trimmed) as { type: string; message?: string; payload?: StoredContentResponse };
-
-          if (event.type === "log" && typeof event.message === "string") {
-            const message = event.message!;
-            setLogs((prev) => [...prev, message]);
-            const storedMatch = message.match(/^(\d+)\s+content entries currently stored for '(.+)'\.?$/i);
-            if (storedMatch) {
-              const [, total, keywordFromLog] = storedMatch;
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                storedContent: Number(total),
-                keyword: keywordFromLog,
-                message,
-              };
-            }
-            const sampleMatch = message.match(/Most recent summary used\s+(\d+)\s+content entries/i);
-            if (sampleMatch) {
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                sampleSize: Number(sampleMatch[1]),
-              };
-            }
-            const latestMatch = message.match(/Latest content entry recorded at\s+(.+)\.?$/i);
-            if (latestMatch) {
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                latestContentAt: latestMatch[1],
-              };
-            }
-          } else if (event.type === "summary" && event.payload) {
-            summaryPayload = event.payload;
-          } else if (event.type === "error" && typeof event.message === "string") {
-            throw new Error(event.message);
-          }
+        if (appendedLog) {
+          await yieldToBrowser();
         }
       }
 
       buffer += decoder.decode();
 
       if (buffer.trim()) {
-        try {
-          const event = JSON.parse(buffer.trim()) as { type: string; message?: string; payload?: StoredContentResponse };
-          if (event.type === "log" && typeof event.message === "string") {
-            const message = event.message!;
-            setLogs((prev) => [...prev, message]);
-            const storedMatch = message.match(/^(\d+)\s+content entries currently stored for '(.+)'\.?$/i);
-            if (storedMatch) {
-              const [, total, keywordFromLog] = storedMatch;
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                storedContent: Number(total),
-                keyword: keywordFromLog,
-                message,
-              };
-            }
-            const sampleMatch = message.match(/Most recent summary used\s+(\d+)\s+content entries/i);
-            if (sampleMatch) {
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                sampleSize: Number(sampleMatch[1]),
-              };
-            }
-            const latestMatch = message.match(/Latest content entry recorded at\s+(.+)\.?$/i);
-            if (latestMatch) {
-              fallbackSummary = {
-                ...(fallbackSummary ?? {}),
-                latestContentAt: latestMatch[1],
-              };
-            }
-          } else if (event.type === "summary" && event.payload) {
-            summaryPayload = event.payload;
-          } else if (event.type === "error" && typeof event.message === "string") {
-            throw new Error(event.message);
-          }
-        } catch {
-          // Ignore trailing partial JSON fragments.
+        const trimmed = buffer.trim();
+        const appended = handleEventLine(trimmed);
+        if (appended) {
+          await yieldToBrowser();
         }
       }
 
+      const coerceFallbackSummary = (keywordFromInput: string, candidate: Partial<StoredContentResponse> | null) => {
+        if (!candidate || candidate.storedContent === undefined) {
+          return null;
+        }
+
+        return {
+          keyword: candidate.keyword ?? keywordFromInput,
+          storedContent: candidate.storedContent,
+          sampleSize: candidate.sampleSize ?? 0,
+          latestContentAt: candidate.latestContentAt ?? null,
+          message:
+            candidate.message ??
+            `${candidate.storedContent} content entries currently stored for '${candidate.keyword ?? keywordFromInput}'.`,
+        } satisfies StoredContentResponse;
+      };
+
       if (!summaryPayload) {
-        if (fallbackSummary?.storedContent !== undefined) {
-          summaryPayload = {
-            keyword: fallbackSummary.keyword ?? input,
-            storedContent: fallbackSummary.storedContent,
-            sampleSize: fallbackSummary.sampleSize ?? 0,
-            latestContentAt: fallbackSummary.latestContentAt ?? null,
-            message:
-              fallbackSummary.message ?? `${fallbackSummary.storedContent} content entries currently stored for '${fallbackSummary.keyword ?? input}'.`,
-          };
+        const builtFallback = coerceFallbackSummary(input, fallbackSummary);
+        if (builtFallback) {
+          summaryPayload = builtFallback;
         } else {
           throw new Error("Analysis completed without a summary response.");
         }
@@ -173,8 +188,11 @@ export default function AnalyzePage() {
               1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
             </p>
             <p>
-              2. (Optional) Refresh the dataset by running <code>python main.py run &quot;your keyword&quot;</code> from the
-              <code>backend</code> directory.
+              2. (Optional) Refresh the dataset by running <code>python main.py run-reddit &quot;your keyword&quot;</code> from
+              the <code>backend</code> directory.
+            </p>
+            <p>
+              &nbsp;&nbsp;&nbsp;Use <code>--engine fast</code> to try the lightweight analyzer variant.
             </p>
             <p>
               3. Enter a keyword below to see how much user content is currently stored for that topic.
@@ -193,9 +211,12 @@ export default function AnalyzePage() {
             onChange={(event) => setText(event.target.value)}
             disabled={isLoading}
           />
-          <div className="hero-actions fade-up delay-2">
-            <button type="submit" className="button-primary" disabled={isLoading}>
-              {isLoading ? "Analyzing..." : "Run sentiment"}
+          <div className="hero-actions fade-up delay-2" style={{ gap: "0.75rem", display: "flex" }}>
+            <button type="submit" className="button-primary" data-engine="default" disabled={isLoading}>
+              {isLoading ? "Analyzing..." : "Run full sentiment"}
+            </button>
+            <button type="submit" className="button-secondary" data-engine="fast" disabled={isLoading}>
+              {isLoading ? "Analyzing..." : "Run fast test sentiment"}
             </button>
             <button
               type="button"
@@ -204,6 +225,8 @@ export default function AnalyzePage() {
                 setText("");
                 setResult(null);
                 setError(null);
+                setLogs([]);
+                setActiveEngine("default");
               }}
               disabled={isLoading}
             >
@@ -232,7 +255,9 @@ export default function AnalyzePage() {
                 }}
               />
             </div>
-            <span>Running backend analysis…</span>
+            <span>
+              {activeEngine === "fast" ? "Running fast sentiment analyzer…" : "Running full sentiment analyzer…"}
+            </span>
           </div>
         )}
 
