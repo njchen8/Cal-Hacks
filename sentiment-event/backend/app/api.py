@@ -20,7 +20,7 @@ from .config import settings
 from .database import init_db
 from .summary import summarize_keyword
 from generate_report import generate_report_by_keyword, sanitize_filename
-from lava_summary import LavaGatewaySummarizer
+from lava_summary import GeminiSummarizer
 
 app = FastAPI(title="Sentiment Event API", version="1.0.0")
 
@@ -207,9 +207,9 @@ def _generate_lava_summary(
             pass
 
     try:
-        summarizer = LavaGatewaySummarizer()
+        summarizer = GeminiSummarizer()
     except ValueError:
-        log_lines.append("[lava] Lava credentials are incomplete; summary skipped.")
+        log_lines.append("[gemini] Gemini API key is missing; summary skipped.")
         return None, None, csv_path, log_lines
 
     summary_text = _capture_stdout(summarizer.generate_summary, log_lines, str(csv_path), summary_path)
