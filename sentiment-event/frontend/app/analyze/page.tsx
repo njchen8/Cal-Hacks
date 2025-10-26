@@ -221,7 +221,7 @@ export default function AnalyzePage() {
               1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
             </p>
             <p>
-              2. Scrape data from Twitter, Reddit, or Facebook:
+              2. Scrape data from Twitter, Reddit, and Facebook:
             </p>
             <p>
               &nbsp;&nbsp;&nbsp;<code>python main.py run &quot;keyword&quot;</code> (Twitter)
