@@ -1,66 +1,40 @@
-'use client';
-
 import Link from "next/link";
 import ReactionTicker from "@/components/ReactionTicker";
-import { useEffect, useState } from "react";
 
 const featureItems = [
   {
-    title: "Real-time sentiment tracking",
+    title: "Product pulse in minutes",
     description:
-      "Monitor how customers feel about your products and launches in real-time. Track positive, negative, and neutral reactions across social platforms.",
+      "Blend headline sentiment with emotion signals to understand how launches, feature drops, and pricing changes land with customers.",
   },
   {
-    title: "Emotion-driven analytics",
+    title: "Emotion-backed benchmarking",
     description:
-      "Go beyond simple sentiment scores. Understand the emotions—joy, trust, concern, desire—that drive customer reactions and shape perceptions.",
+      "Compare joy, trust, desire, and concern across releases to spot what drives delight or frustration in your product experience.",
   },
   {
-    title: "Actionable insights",
+    title: "Global listening, zero noise",
     description:
-      "Transform raw social data into actionable insights. Every insight traces back to real conversations, helping teams make informed decisions quickly.",
+      "Scrape social conversations from multiple regions, keep traceability to original posts, and track the narrative as it evolves.",
   },
 ];
 
 export default function HomePage() {
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const maxScroll = 800;
-      const progress = Math.min(scrollY / maxScroll, 1);
-      setScrollProgress(progress);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div className="page">
-      <section 
-        className="main-hero"
-        style={{
-          opacity: Math.max(0, Math.min(1, (scrollProgress - 0.5) / 0.3)),
-          transform: `translateY(${(1 - Math.max(0, Math.min(1, (scrollProgress - 0.5) / 0.3))) * 100}px)`,
-          transition: 'opacity 0.3s ease, transform 0.3s ease',
-        }}
-      >
+      <section className="main-hero">
         <div className="hero-copy">
-          <h1 className="hero-title fade-up">BluBerri — Sentiment Analysis Reimagined</h1>
+          <h1 className="hero-title fade-up">Bluberri shows how the globe feels about every launch moment.</h1>
           <p className="fade-up delay-1">
-            Transform raw social data into actionable insights. BluBerri analyzes customer sentiment across platforms, 
-            helping you understand emotions, reactions, and trends around your products and launches.
+            Bluberri transforms raw social data into a blueberry-blue command center for product, marketing, and CX teams.
+            Track reactions to features, packaging, or campaigns and uncover the emotions stitched through every post.
           </p>
           <div className="hero-actions fade-up delay-2">
             <Link href="/analyze" className="button-primary">
-              Start Analysis
+              Try the analyzer
             </Link>
             <Link href="/about" className="button-secondary">
-              Learn More
+              Learn about the project
             </Link>
           </div>
           <div className="fade-up delay-3">
@@ -69,17 +43,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        style={{
-          opacity: Math.max(0, Math.min(1, (scrollProgress - 0.7) / 0.25)),
-          transform: `translateY(${(1 - Math.max(0, Math.min(1, (scrollProgress - 0.7) / 0.25))) * 100}px)`,
-          transition: 'opacity 0.3s ease, transform 0.3s ease',
-        }}
-      >
-        <h2 className="section-heading">Powerful sentiment intelligence</h2>
+      <section>
+        <h2 className="section-heading">Why product sentiment intelligence matters</h2>
         <p className="section-subtitle">
-          BluBerri helps product teams, marketers, and analysts understand customer reactions at scale. 
-          Our platform combines social listening with emotion analysis to reveal what truly matters to your audience.
+          Product managers, brand strategists, and growth leaders need signal in the noise. Bluberri surfaces how customers actually feel so you can refine roadmaps, launch smarter, and protect brand trust.
         </p>
         <div className="feature-grid">
           {featureItems.map((feature, index) => (

@@ -2,19 +2,19 @@ import Link from "next/link";
 
 const principles = [
   {
-    title: "Authentic data sources",
+    title: "Customer-first evidence",
     description:
-      "Every insight is rooted in real conversations. We preserve links and metadata so teams can trace each sentiment back to its source and verify findings.",
+      "Every insight ties back to a real post. Keep links and metadata intact so product squads can drill into authentic conversations.",
   },
   {
-    title: "Deep emotional analysis",
+    title: "Emotion explains impact",
     description:
-      "Surface-level sentiment isn't enough. We analyze the emotions beneath—joy, trust, concern, and anticipation—to reveal the full story of customer reactions.",
+      "Primary sentiment is just the start. We surface the emotions driving delight, concern, or anticipation around every release.",
   },
   {
-    title: "Built for speed",
+    title: "Built for product velocity",
     description:
-      "Fast, intuitive, and actionable. BluBerri delivers clear insights that help teams make decisions without slowing down their workflow.",
+      "Growth and CX teams deserve tooling they can act on. Bluberri keeps the interface clear so you can iterate without slowing down.",
   },
 ];
 
@@ -23,12 +23,10 @@ export default function AboutPage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading hero-title fade-up">About BluBerri</h1>
+          <h1 className="section-heading hero-title fade-up">About Bluberri</h1>
           <p className="section-subtitle fade-up delay-1">
-            BluBerri was created at Cal Hacks to revolutionize how teams understand customer sentiment. 
-            We combine social listening, emotion analysis, and intelligent data processing to transform 
-            raw feedback into actionable insights. Whether you're launching products, managing brand reputation, 
-            or tracking market trends, BluBerri helps you understand what your customers truly feel.
+            Bluberri began at Cal Hacks as a blueberry-blue control room for product sentiment. From hardware drops to SaaS rollouts,
+            we translate global discourse into a living mood board that keeps launch teams aligned.
           </p>
         </header>
 

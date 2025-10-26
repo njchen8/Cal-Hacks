@@ -1,23 +1,23 @@
 :root {
-  --color-background: #ffffff;
+  --color-background: #f6f8ff;
   --color-surface: #ffffff;
-  --color-surface-alt: #f8f9ff;
-  --color-surface-deep: #f5f7ff;
+  --color-surface-alt: #f3edff;
+  --color-surface-deep: #edf1ff;
   --color-primary: #4f86f7;
   --color-primary-accent: #7aa6ff;
   --color-secondary: #c9a0dc;
   --color-accent-sky: #9cd9ff;
   --color-accent-mint: #88ead9;
   --color-accent-peach: #ffd7c2;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #666666;
-  --color-border: rgba(79, 134, 247, 0.25);
+  --color-text-primary: #08133a;
+  --color-text-secondary: #4c567a;
+  --color-border: rgba(79, 134, 247, 0.18);
   --color-positive: #5dbedd;
   --color-negative: #f3a1b7;
   --color-neutral: #9fb5e6;
   --grid-gap: clamp(1.5rem, 2vw, 2.5rem);
-  --shadow-soft: 0 28px 70px -35px rgba(79, 134, 247, 0.3);
-  --shadow-mid: 0 24px 55px -30px rgba(79, 134, 247, 0.25);
+  --shadow-soft: 0 28px 70px -35px rgba(36, 61, 130, 0.32);
+  --shadow-mid: 0 24px 55px -30px rgba(79, 134, 247, 0.28);
   --radius-large: 26px;
   --radius-medium: 18px;
   --radius-small: 12px;
@@ -111,7 +111,7 @@ body::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--color-surface-deep);
   position: relative;
   overflow-x: hidden;
   overflow-y: visible;
@@ -165,7 +165,6 @@ body::-webkit-scrollbar {
 .page {
   display: grid;
   gap: clamp(3rem, 6vw, 4.5rem);
-  padding: 0 clamp(1rem, 4vw, 3rem);
 }
 
 a {
@@ -185,10 +184,14 @@ button {
   gap: var(--grid-gap);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   align-items: center;
-  padding: clamp(2.75rem, 6vw, 4.75rem) 0;
+  padding: clamp(2.75rem, 6vw, 4.75rem) clamp(1rem, 4vw, 3rem);
+  border-radius: var(--radius-large);
+  backdrop-filter: blur(7px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-mid);
   position: relative;
-  margin-top: 100vh;
-  max-width: 600px;
+  overflow: hidden;
 }
 
 .hero-copy h1 {
@@ -205,7 +208,10 @@ button {
 }
 
 .hero-title {
-  color: var(--color-text-primary);
+  background: linear-gradient(120deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero-copy p {
@@ -226,9 +232,9 @@ button {
   margin-top: 2rem;
   padding: 1.35rem 1.5rem;
   border-radius: var(--radius-medium);
-  background: linear-gradient(135deg, rgba(79, 134, 247, 0.08), rgba(201, 160, 220, 0.05));
-  border: 1px solid rgba(79, 134, 247, 0.2);
-  box-shadow: 0 18px 45px -28px rgba(79, 134, 247, 0.15);
+  background: linear-gradient(135deg, rgba(79, 134, 247, 0.16), rgba(201, 160, 220, 0.2));
+  border: 1px solid rgba(79, 134, 247, 0.22);
+  box-shadow: 0 18px 45px -28px rgba(61, 92, 163, 0.28);
   min-height: 132px;
   position: relative;
   overflow: hidden;
@@ -238,7 +244,7 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(79, 134, 247, 0.08), rgba(255, 255, 255, 0));
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
@@ -305,11 +311,11 @@ button {
 }
 
 .feature-card {
-  background: linear-gradient(160deg, rgba(79, 134, 247, 0.08), rgba(255, 255, 255, 0.4));
-  border: 1px solid rgba(79, 134, 247, 0.2);
+  background: linear-gradient(160deg, rgba(201, 160, 220, 0.18), rgba(255, 255, 255, 0.92));
+  border: 1px solid rgba(201, 160, 220, 0.38);
   border-radius: var(--radius-medium);
   padding: clamp(1.75rem, 3vw, 2.25rem);
-  box-shadow: 0 18px 45px -30px rgba(79, 134, 247, 0.2);
+  box-shadow: 0 18px 45px -30px rgba(82, 92, 150, 0.28);
   display: grid;
   gap: 0.75rem;
 }
@@ -344,8 +350,8 @@ section + section {
 }
 
 .analysis-panel {
-  background: linear-gradient(165deg, rgba(79, 134, 247, 0.05), rgba(255, 255, 255, 0.95));
-  border: 1px solid rgba(79, 134, 247, 0.2);
+  background: linear-gradient(165deg, rgba(201, 160, 220, 0.12), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(79, 134, 247, 0.18);
   border-radius: var(--radius-large);
   padding: clamp(2rem, 5vw, 3rem);
   box-shadow: var(--shadow-soft);
@@ -367,10 +373,9 @@ section + section {
   min-height: 140px;
   padding: 1.1rem 1.25rem;
   border-radius: var(--radius-medium);
-  border: 1px solid rgba(79, 134, 247, 0.25);
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--color-text-primary);
-  box-shadow: inset 0 2px 10px rgba(79, 134, 247, 0.08);
+  border: 1px solid rgba(79, 134, 247, 0.28);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 2px 10px rgba(79, 134, 247, 0.1);
   font-size: 1rem;
   resize: vertical;
   transition: border 0.2s ease, box-shadow 0.2s ease;
@@ -378,19 +383,17 @@ section + section {
 
 .analyze-form textarea:focus {
   outline: none;
-  border-color: rgba(79, 134, 247, 0.5);
-  box-shadow: 
-    inset 0 2px 12px rgba(79, 134, 247, 0.15),
-    0 0 20px rgba(79, 134, 247, 0.12);
+  border-color: rgba(79, 134, 247, 0.65);
+  box-shadow: 0 0 0 4px rgba(79, 134, 247, 0.18);
 }
 
 .status-banner {
   padding: 1rem 1.25rem;
   border-radius: var(--radius-small);
   font-weight: 600;
-  background: rgba(79, 134, 247, 0.08);
+  background: rgba(79, 134, 247, 0.12);
   color: var(--color-text-primary);
-  border: 1px solid rgba(79, 134, 247, 0.2);
+  border: 1px solid rgba(79, 134, 247, 0.22);
 }
 
 .status-banner.error {
@@ -407,10 +410,10 @@ section + section {
 
 .result-card {
   border-radius: var(--radius-medium);
-  border: 1px solid rgba(79, 134, 247, 0.25);
-  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(79, 134, 247, 0.18);
+  background: rgba(255, 255, 255, 0.88);
   padding: clamp(1.5rem, 3vw, 2.25rem);
-  box-shadow: 0 18px 45px -35px rgba(79, 134, 247, 0.2);
+  box-shadow: 0 18px 45px -35px rgba(82, 92, 150, 0.26);
   display: grid;
   gap: 1.1rem;
 }
@@ -467,8 +470,8 @@ section + section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(79, 134, 247, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(79, 134, 247, 0.22);
   border-radius: 999px;
   padding: 0.55rem 0.9rem;
   font-size: 0.95rem;
@@ -520,8 +523,9 @@ footer {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(12px);
-  background: transparent;
+  backdrop-filter: blur(8px);
+  background: rgba(239, 244, 255, 0.85);
+  border-bottom: 1px solid rgba(79, 134, 247, 0.2);
 }
 
 .navbar-inner {
@@ -585,22 +589,4 @@ footer {
     padding-top: 3.5rem;
     padding-bottom: 3.5rem;
   }
-}
-
-/* Blueberry Farm 3D Background */
-.blueberry-farm-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  pointer-events: auto;
-  background: #ffffff;
-}
-
-.blueberry-farm-container canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
