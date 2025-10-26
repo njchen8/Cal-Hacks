@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { StoredContentResponse } from "@/types/sentiment";
 
 const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
@@ -273,7 +274,9 @@ export default function AnalyzePage() {
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
               Lava Gateway summary
             </h2>
-            <pre className="lava-output">{lavaSummary}</pre>
+            <div className="lava-output">
+              <ReactMarkdown>{lavaSummary}</ReactMarkdown>
+            </div>
           </div>
         )}
         {logs.length > 0 && (
@@ -336,11 +339,41 @@ export default function AnalyzePage() {
         .lava-output {
           background: rgba(255, 255, 255, 0.08);
           border-radius: 12px;
-          padding: 1rem;
-          font-family: "Inter", "Segoe UI", sans-serif;
+          padding: 1.5rem;
+          font-family: "Nunito", system-ui, sans-serif;
           font-size: 0.95rem;
-          line-height: 1.5;
-          white-space: pre-wrap;
+          line-height: 1.6;
+          color: var(--color-text-primary);
+        }
+
+        .lava-output h2 {
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          color: var(--color-primary);
+        }
+
+        .lava-output h2:first-child {
+          margin-top: 0;
+        }
+
+        .lava-output p {
+          margin-bottom: 1rem;
+        }
+
+        .lava-output strong {
+          font-weight: 700;
+          color: var(--color-primary);
+        }
+
+        .lava-output ul {
+          margin-left: 1.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .lava-output li {
+          margin-bottom: 0.5rem;
         }
       `}</style>
       </section>
