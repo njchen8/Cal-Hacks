@@ -66,6 +66,35 @@ export default function HomePage() {
 
   return (
     <div className="page">
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          width: '100%',
+          padding: '1rem 0',
+        }}
+      >
+        <h1
+          className="hero-title fade-up"
+          style={{
+        display: 'inline-block',
+        fontSize: 'clamp(2.0rem, 4vw, 3rem)',
+        lineHeight: 1.05,
+        fontWeight: 800,
+        letterSpacing: '-0.02em',
+        margin: 0,
+        padding: '0.25rem 0.6rem',
+        border: '2px solid #B7F5C1', // light green border
+        borderRadius: '6px',
+        backgroundColor: '#B7F5C1', // fill the border
+        color: '#042a14', // dark text for contrast
+          }}
+        >
+          bluberri
+        </h1>
+      </header>
       <section 
         className="main-hero"
         style={{
