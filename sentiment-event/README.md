@@ -60,4 +60,34 @@ Set `BACKEND_API_URL` in the frontend environment (or `.env.local`) to the FastA
 
 Once the API is running, open the analyzer page in the frontend and enter a keyword to view how many tweets are currently stored in the SQLite database for that term. Run `python main.py run "your keyword"` (from the `backend` directory) whenever you want to refresh the stored data before checking the count.
 
+## Lava Gateway Integration (LLM-Powered Summaries)
+
+Generate professional text summaries from your sentiment CSV files using Lava Gateway:
+
+### Setup
+
+Add your Lava Gateway API key to `.env`:
+
+```bash
+LAVA_API_KEY=your_lava_gateway_api_key_here
+LAVA_BASE_URL=https://api.lavagateway.com/v1
+```
+
+### Usage
+
+```bash
+# Generate CSV report first
+python generate_report.py
+
+# Generate human-friendly summary with Lava Gateway
+python lava_summary.py reports/sentiment_iphone.csv
+```
+
+This creates a professional text report at `reports/summary_iphone.txt` with sections for overall sentiment, key themes, positive/negative highlights, emotional undertones, and main takeaways.
+
+**Options:**
+- `--output <path>`: Custom output path
+- `--model <name>`: Use different model (default: meta-llama/Llama-3.3-70B-Instruct)
+- `--api-key <key>`: Pass API key directly instead of using .env
+
 

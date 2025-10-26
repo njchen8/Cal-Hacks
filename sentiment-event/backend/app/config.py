@@ -67,6 +67,10 @@ class Settings:
         "SentimentEventBackend/1.0 (by /u/YourUsername)",
     )
 
+    # Lava Gateway API credentials (for LLM-powered sentiment summaries)
+    lava_api_key: Optional[str] = os.getenv("LAVA_API_KEY")
+    lava_base_url: str = os.getenv("LAVA_BASE_URL", "https://api.lavagateway.com/v1")
+
     @property
     def sqlite_path(self) -> Path:
         """Return the sqlite file path when using the local sqlite URL."""
