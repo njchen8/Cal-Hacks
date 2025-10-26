@@ -217,11 +217,11 @@ export default function AnalyzePage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading fade-up">Product Sentiment Analysis</h1>
+          <h1 className="section-heading fade-up">bluberrier</h1>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="product-input">Product to analyze</label>
+          <label htmlFor="product-input">Topic to analyze</label>
           <textarea
             id="product-input"
             name="product"
