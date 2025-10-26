@@ -173,59 +173,55 @@ class LavaGatewaySummarizer:
         negative_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEGATIVE'][:5]
         neutral_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEUTRAL'][:5]
 
-        prompt = f"""You are a professional data analyst. Analyze this sentiment analysis dataset and write a clear, human-friendly report.
+        prompt = f"""You are a data storyteller creating an engaging, scannable sentiment report.
 
-Dataset Overview:
-- Keyword/Topic: {stats['keyword']}
-- Data Source: {stats['source']}
-- Total Posts Analyzed: {stats['total_posts']}
+**DATA CONTEXT:**
+Topic: {stats['keyword']} | Source: {stats['source']} | Posts: {stats['total_posts']}
+Sentiment: {stats['sentiment_percentages'].get('POSITIVE', 0):.0f}% positive, {stats['sentiment_percentages'].get('NEGATIVE', 0):.0f}% negative, {stats['sentiment_percentages'].get('NEUTRAL', 0):.0f}% neutral
+Top Emotions: {', '.join(list(stats['top_emotions_positive'].keys())[:3])} (positive) | {', '.join(list(stats['top_emotions_negative'].keys())[:3])} (negative)
 
-Sentiment Distribution:
-- Positive: {stats['sentiment_percentages'].get('POSITIVE', 0):.1f}% ({stats['sentiment_counts'].get('POSITIVE', 0)} posts)
-- Negative: {stats['sentiment_percentages'].get('NEGATIVE', 0):.1f}% ({stats['sentiment_counts'].get('NEGATIVE', 0)} posts)
-- Neutral: {stats['sentiment_percentages'].get('NEUTRAL', 0):.1f}% ({stats['sentiment_counts'].get('NEUTRAL', 0)} posts)
+Sample posts:
+Positive: {positive_samples[0] if positive_samples else 'N/A'}
+Negative: {negative_samples[0] if negative_samples else 'N/A'}
 
-Average Sentiment Scores:
-- Positive Score: {stats['avg_scores'].get('positive', 0):.3f}
-- Negative Score: {stats['avg_scores'].get('negative', 0):.3f}
-- Neutral Score: {stats['avg_scores'].get('neutral', 0):.3f}
+**YOUR TASK:**
+Write a concise, beautifully formatted sentiment report using proper Markdown. Use the Nunito font aesthetic (friendly, modern, clean).
 
-Top Positive Emotions Detected:
-{chr(10).join(f'- {emotion.capitalize()}: {score:.3f}' for emotion, score in stats['top_emotions_positive'].items())}
+**FORMAT REQUIREMENTS:**
+1. Use **bold** for key terms and statistics
+2. Keep paragraphs SHORT (2-3 sentences max)
+3. Use line breaks for readability
+4. Include exact percentages from the data
+5. Be specific, not generic
+6. Write in present tense
+7. Total length: 400-600 words MAX
 
-Top Negative Emotions Detected:
-{chr(10).join(f'- {emotion.capitalize()}: {score:.3f}' for emotion, score in stats['top_emotions_negative'].items())}
+**STRUCTURE:**
 
-Sample Positive Posts:
-{chr(10).join(f'{i+1}. {post}' for i, post in enumerate(positive_samples))}
+## 📊 Sentiment Overview
+[2-3 sentences max. State the dominant sentiment, key percentage, and one interesting insight]
 
-Sample Negative Posts:
-{chr(10).join(f'{i+1}. {post}' for i, post in enumerate(negative_samples))}
+## 💬 What People Are Saying
+[3-4 SHORT paragraphs. Each covers ONE specific theme. Use **bold** for theme names. Be concrete with examples from the data.]
 
-Sample Neutral Posts:
-{chr(10).join(f'{i+1}. {post}' for i, post in enumerate(neutral_samples))}
+## ✨ Positive Highlights
+[2-3 sentences. What do users love? Be specific. Use **bold** for key positive aspects.]
 
-Please write a professional sentiment analysis report with these sections:
+## ⚠️ Concerns & Critiques
+[2-3 sentences. What are the main complaints? Be direct. Use **bold** for key issues.]
 
-# Overall Sentiment
-Describe the overall sentiment landscape. Is it mostly positive, negative, or neutral? What does this say about public opinion?
+## 🎯 Key Insights
+[Exactly 3 bullet points. Each bullet is ONE sentence. Start with action verbs. Make them actionable.]
 
-# Key Themes
-What are the major recurring themes, topics, or points of discussion? What patterns emerge from the posts?
+**STYLE GUIDE:**
+- Friendly but professional tone
+- Short, punchy sentences
+- Avoid: "users express", "the data shows", "it appears that"
+- Instead: Use active voice and direct statements
+- Use specific numbers from the data provided
+- Make it scannable and visually clean
 
-# Positive Highlights
-What do users like or appreciate most? What positive aspects stand out?
-
-# Negative Highlights
-What concerns, complaints, or negative aspects are most prominent? What do users dislike?
-
-# Emotional Undertones
-Based on the emotion analysis (joy, trust, desire, anticipation, fear, anger, greed, surprise), what are the deeper emotional patterns?
-
-# Main Takeaways
-Provide 3-5 high-level insights or actionable takeaways about the overall sentiment trends.
-
-Write this as clear, professional prose suitable for a business report. Avoid lists of raw data or technical jargon. Make it readable and insightful."""
+Begin writing now. Use proper Markdown formatting."""
 
         return prompt
 
