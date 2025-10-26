@@ -259,14 +259,14 @@ def persist(tweets: Iterable[Tweet]) -> int:
         return len(new_records)
 
 
-def scrape_and_persist(keyword: str, limit: int | None = None) -> ScrapeResult:
+def scrape_and_persist(keyword: str, limit: int | None = None, *, ignore_cache: bool = False) -> ScrapeResult:
     """Scrape content, manage exports, and persist new records."""
 
     slug = _slugify(keyword)
     latest_export = _find_latest_export(slug)
     now = datetime.utcnow()
 
-    if latest_export:
+    if latest_export and not ignore_cache:
         latest_path, latest_timestamp = latest_export
         if now - latest_timestamp <= RECENT_EXPORT_WINDOW:
             return ScrapeResult(

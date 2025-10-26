@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 import json
 import os
 import subprocess
@@ -22,22 +22,24 @@ app = FastAPI(title="Sentiment Event API", version="1.0.0")
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
-def _cli_command(keyword: str, limit: Optional[int]) -> list[str]:
+def _cli_command(keyword: str, limit: Optional[int], engine: str) -> list[str]:
     command = [
         sys.executable,
         "-u",
         str(BACKEND_ROOT / "main.py"),
-        "run",
+        "run-reddit",
         keyword,
     ]
     if limit:
         command.extend(["--limit", str(limit)])
+    if engine != "default":
+        command.extend(["--engine", engine])
     return command
 
 
-def _run_cli(keyword: str, limit: Optional[int]) -> str:
+def _run_cli(keyword: str, limit: Optional[int], engine: str) -> str:
     result = subprocess.run(
-        _cli_command(keyword, limit),
+        _cli_command(keyword, limit, engine),
         cwd=str(BACKEND_ROOT),
         capture_output=True,
         text=True,
@@ -51,9 +53,9 @@ def _run_cli(keyword: str, limit: Optional[int]) -> str:
     return result.stdout.strip()
 
 
-def _cli_output_lines(keyword: str, limit: Optional[int]):
+def _cli_output_lines(keyword: str, limit: Optional[int], engine: str):
     process = subprocess.Popen(
-        _cli_command(keyword, limit),
+        _cli_command(keyword, limit, engine),
         cwd=str(BACKEND_ROOT),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -91,6 +93,7 @@ class AnalyzeRequestModel(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=280)
     limit: Optional[int] = Field(None, ge=1, le=500)
     refresh: bool = False
+    engine: Literal["default", "fast"] = "default"
 
 
 @app.on_event("startup")
@@ -106,12 +109,12 @@ def analyze_keyword(payload: AnalyzeRequestModel) -> AnalyzeResponseModel:
 
     cli_output = ""
     if payload.refresh:
-        cli_output = _run_cli(keyword, payload.limit)
+        cli_output = _run_cli(keyword, payload.limit, payload.engine)
 
     _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
     if total_content == 0:
-        cli_output = _run_cli(keyword, payload.limit)
+        cli_output = _run_cli(keyword, payload.limit, payload.engine)
         _, sample_size, total_content, latest_content_at = summarize_keyword(keyword, limit=payload.limit)
 
     message = cli_output or f"{total_content} content entries currently stored for '{keyword}'."
@@ -139,7 +142,7 @@ def analyze_keyword_stream(payload: AnalyzeRequestModel):
         if needs_refresh:
             yield _encode_event({"type": "log", "message": "Refreshing dataset via backend CLI..."})
             try:
-                for line in _cli_output_lines(keyword, payload.limit):
+                for line in _cli_output_lines(keyword, payload.limit, payload.engine):
                     if not line:
                         continue
                     yield _encode_event({"type": "log", "message": line})

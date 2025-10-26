@@ -18,13 +18,14 @@ def analyze_pending(
     limit: Optional[int] = None,
     keyword: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int], None]] = None,
+    variant: str = "default",
 ) -> int:
     """Analyze stored content items without sentiment and persist results.
 
     Returns the number of content items updated.
     """
 
-    analyzer = get_analyzer()
+    analyzer = get_analyzer(variant)
     updated = 0
 
     with get_session() as session:
@@ -49,16 +50,21 @@ def analyze_pending(
     return updated
 
 
-def scrape(keyword: str, limit: Optional[int] = None) -> ScrapeResult:
+def scrape(keyword: str, limit: Optional[int] = None, ignore_cache: bool = False) -> ScrapeResult:
     """Scrape new content for a keyword, honoring cached exports when available."""
     effective_limit = limit or settings.scrape_limit
-    return scrape_and_persist(keyword, limit=effective_limit)
+    return scrape_and_persist(keyword, limit=effective_limit, ignore_cache=ignore_cache)
 
 
-def scrape_and_analyze(keyword: str, limit: Optional[int] = None) -> tuple[ScrapeResult, int]:
+def scrape_and_analyze(
+    keyword: str,
+    limit: Optional[int] = None,
+    ignore_cache: bool = False,
+    variant: str = "default",
+) -> tuple[ScrapeResult, int]:
     """Scrape content and immediately analyze the new entries when needed."""
-    scrape_result = scrape(keyword, limit=limit)
-    analyzed = 0 if scrape_result.used_cache else analyze_pending(keyword=keyword)
+    scrape_result = scrape(keyword, limit=limit, ignore_cache=ignore_cache)
+    analyzed = 0 if scrape_result.used_cache else analyze_pending(keyword=keyword, variant=variant)
     if scrape_result.export_path:
         update_export_with_sentiment(scrape_result.export_path)
     return scrape_result, analyzed
@@ -82,7 +88,12 @@ def scrape_reddit(keyword: str, limit: Optional[int] = None, subreddit: str = "a
     return scraper_reddit.scrape_and_persist(keyword, limit=limit or settings.scrape_limit, subreddit=subreddit)
 
 
-def scrape_and_analyze_reddit(keyword: str, limit: Optional[int] = None, subreddit: str = "all") -> tuple[int, int]:
+def scrape_and_analyze_reddit(
+    keyword: str,
+    limit: Optional[int] = None,
+    subreddit: str = "all",
+    variant: str = "default",
+) -> tuple[int, int]:
     """Scrape Reddit posts and immediately analyze the new content (Reddit source).
 
     Args:
@@ -94,5 +105,5 @@ def scrape_and_analyze_reddit(keyword: str, limit: Optional[int] = None, subredd
         Tuple of (posts stored, posts analyzed)
     """
     stored = scrape_reddit(keyword, limit=limit, subreddit=subreddit)
-    analyzed = analyze_pending()
+    analyzed = analyze_pending(keyword=keyword, variant=variant)
     return stored, analyzed
