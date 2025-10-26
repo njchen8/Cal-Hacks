@@ -4,12 +4,12 @@ import { FormEvent, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { StoredContentResponse } from "@/types/sentiment";
 
-const examplePrompt = `For example: "The latest noise-cancelling headphones AirPod Pro Max sound incredible, but early users say the app setup feels clunky."`;
-
 export default function AnalyzePage() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<StoredContentResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [progressStep, setProgressStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(25);
   const [insightSummary, setInsightSummary] = useState<string | null>(null);
   const [insightMetadata, setInsightMetadata] = useState<{ keyword: string; csvPath?: string; summaryPath?: string } | null>(
     null,
@@ -36,6 +36,7 @@ export default function AnalyzePage() {
     setActiveEngine(engine);
     setError(null);
     setLogs([]);
+    setProgressStep(0);
   setInsightSummary(null);
   setResult(null);
   setInsightMetadata(null);
@@ -106,6 +107,7 @@ export default function AnalyzePage() {
           if (event.type === "log" && typeof event.message === "string") {
             const message = event.message;
             setLogs((prev) => [...prev, message]);
+            setProgressStep((prev) => Math.min(prev + 1, totalSteps));
             updateFallbackSummary(message);
             return true;
           }
@@ -215,39 +217,15 @@ export default function AnalyzePage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading fade-up">Usage guide & live analyzer</h1>
-          <div className="instructions fade-up delay-1">
-            <p>
-              1. Start the FastAPI server: <code>uvicorn app.api:app --host 0.0.0.0 --port 8000</code>
-            </p>
-            <p>
-              2. Scrape data from Twitter, Reddit, and Facebook:
-            </p>
-            <p>
-              &nbsp;&nbsp;&nbsp;<code>python main.py run &quot;keyword&quot;</code> (Twitter)
-            </p>
-            <p>
-              &nbsp;&nbsp;&nbsp;<code>python main.py run-reddit &quot;keyword&quot;</code> (Reddit)
-            </p>
-            <p>
-              &nbsp;&nbsp;&nbsp;<code>python main.py run-facebook &quot;keyword&quot; --page-id PAGE_ID</code> (Facebook)
-            </p>
-            <p>
-              &nbsp;&nbsp;&nbsp;Add <code>--engine fast</code> for lightweight sentiment analysis.
-            </p>
-            <p>
-              3. Enter a keyword below to analyze stored content and generate AI summaries via Gemini.
-            </p>
-            <p>{examplePrompt}</p>
-          </div>
+          <h1 className="section-heading fade-up">Product Sentiment Analysis</h1>
         </header>
 
         <form className="analyze-form" onSubmit={handleSubmit}>
-          <label htmlFor="product-input">What are we analyzing?</label>
+          <label htmlFor="product-input">Product to analyze</label>
           <textarea
             id="product-input"
             name="product"
-            placeholder="Summarize the product moment you want to measure, like a feature rollout or launch reaction..."
+            placeholder="Enter the product name you want to measure (e.g., AirPods Pro Max, MacBook Air M3, etc.)"
             value={text}
             onChange={(event) => setText(event.target.value)}
             disabled={isLoading}
@@ -267,7 +245,8 @@ export default function AnalyzePage() {
                 setResult(null);
                 setError(null);
                 setLogs([]);
-                setActiveEngine("default");
+                setProgressStep(0);
+                setInsightSummary(null);
               }}
               disabled={isLoading}
             >
@@ -290,14 +269,15 @@ export default function AnalyzePage() {
               <div
                 className="loading-bar-fill"
                 style={{
-                  width: "100%",
+                  width: `${(progressStep / totalSteps) * 100}%`,
                   height: "100%",
                   background: "linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%)",
+                  transition: "width 0.3s ease",
                 }}
               />
             </div>
             <span>
-              {activeEngine === "fast" ? "Running fast sentiment analyzer…" : "Running full sentiment analyzer…"}
+              {progressStep}/{totalSteps} complete
             </span>
           </div>
         )}
@@ -306,26 +286,11 @@ export default function AnalyzePage() {
         {insightSummary && (
           <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
             <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Gemini AI summary
+              Social Media Sentiments
             </h2>
             <div className="insight-output">
-              {insightMetadata && (
-                <p className="insight-meta">
-                  Keyword <strong>{insightMetadata.keyword}</strong>
-                  {insightMetadata.summaryPath ? ` · Summary: ${insightMetadata.summaryPath}` : null}
-                  {insightMetadata.csvPath ? ` · CSV: ${insightMetadata.csvPath}` : null}
-                </p>
-              )}
               <ReactMarkdown>{insightSummary}</ReactMarkdown>
             </div>
-          </div>
-        )}
-        {logs.length > 0 && (
-          <div className="status-banner info fade-up" style={{ marginTop: "1.5rem" }}>
-            <h2 className="section-heading" style={{ marginBottom: "0.75rem" }}>
-              Live progress
-            </h2>
-            <pre className="log-window">{logs.join("\n")}</pre>
           </div>
         )}
         {result && !error && (
@@ -351,31 +316,6 @@ export default function AnalyzePage() {
           </div>
         )}
       <style jsx>{`
-        @keyframes bluberriLoading {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(0%);
-          }
-        }
-
-        .loading-bar-fill {
-          transform: translateX(-100%);
-          animation: bluberriLoading 1.2s ease-in-out infinite;
-        }
-
-        .log-window {
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 1rem;
-          font-family: "Fira Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-          font-size: 0.9rem;
-          line-height: 1.4;
-          max-height: 240px;
-          overflow-y: auto;
-          white-space: pre-wrap;
-        }
 
         .insight-output {
           background: rgba(255, 255, 255, 0.08);
