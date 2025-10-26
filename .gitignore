@@ -1,0 +1,51 @@
+# Environment variables with secrets
+.env
+*.env
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Data and reports (temporary outputs)
+sentiment-event/backend/data/
+sentiment-event/backend/sentiment_report.txt
+sentiment-event/backend/sentiment_report.csv
+sentiment-event/backend/reports/
+# Allow sample CSV files
+!sentiment-event/backend/reports/sentiment_iphone.csv
+!sentiment-event/backend/reports/sentiment_ray-ban_meta.csv
+
+# Misc
+*.log
+.next/

@@ -1,4 +1,7 @@
-"""Entry point CLI for the sentiment analysis backend."""
+"""Entry point CLI for the sentiment analysis backend.
+
+Supports both Twitter (original) and Reddit (alternative) as data sources.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +12,15 @@ from typing import Any, Dict
 
 from app import settings
 from app.database import init_db
+from app.pipeline import analyze_pending, scrape, scrape_and_analyze
+from app.pipeline import scrape_reddit, scrape_and_analyze_reddit
 from app.pipeline import analyze_pending, scrape
 from app.scraper import update_export_with_sentiment
 from app.summary import summarize_keyword
 
 
 def _configure_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Twitter sentiment analysis backend")
+    parser = argparse.ArgumentParser(description="Multi-source sentiment analysis backend (Twitter + Reddit)")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     scrape_parser = subparsers.add_parser("scrape", help="Scrape user content for a keyword")
@@ -26,9 +31,22 @@ def _configure_parser() -> argparse.ArgumentParser:
     analyze_parser.add_argument("--limit", type=int, default=None, help="Limit the number of items to analyze")
     analyze_parser.add_argument("--json", action="store_true", help="Print the analyzed content as JSON")
 
-    run_parser = subparsers.add_parser("run", help="Scrape and analyze in one step")
+    run_parser = subparsers.add_parser("run", help="Scrape and analyze in one step (Twitter)")
     run_parser.add_argument("keyword", type=str, help="Keyword or search query")
     run_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of items to fetch")
+
+    # ============================================================================
+    # REDDIT COMMANDS (Alternative source)
+    # ============================================================================
+    scrape_reddit_parser = subparsers.add_parser("scrape-reddit", help="Scrape Reddit posts for a keyword")
+    scrape_reddit_parser.add_argument("keyword", type=str, help="Keyword or search query")
+    scrape_reddit_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of posts to fetch")
+    scrape_reddit_parser.add_argument("--subreddit", type=str, default="all", help="Subreddit to search (default: all)")
+
+    run_reddit_parser = subparsers.add_parser("run-reddit", help="Scrape Reddit and analyze in one step")
+    run_reddit_parser.add_argument("keyword", type=str, help="Keyword or search query")
+    run_reddit_parser.add_argument("--limit", type=int, default=settings.scrape_limit, help="Number of posts to fetch")
+    run_reddit_parser.add_argument("--subreddit", type=str, default="all", help="Subreddit to search (default: all)")
 
     return parser
 
@@ -134,6 +152,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[5/5] Latest content entry recorded at {latest.isoformat()}.", flush=True)
         print(f"{total_content} content entries currently stored for '{args.keyword}'.", flush=True)
         print(f"Most recent summary used {sample_size} content entries that already have sentiment scores.", flush=True)
+        return 0
+
+    # ============================================================================
+    # REDDIT COMMAND HANDLERS (Alternative source)
+    # ============================================================================
+    if args.command == "scrape-reddit":
+        stored = scrape_reddit(args.keyword, limit=args.limit, subreddit=args.subreddit)
+        print(f"Stored {stored} new Reddit posts for '{args.keyword}' from r/{args.subreddit}.")
+        return 0
+
+    if args.command == "run-reddit":
+        stored, analyzed = scrape_and_analyze_reddit(args.keyword, limit=args.limit, subreddit=args.subreddit)
+        print(f"Stored {stored} Reddit posts and analyzed {analyzed} posts for '{args.keyword}' from r/{args.subreddit}.")
         return 0
 
     parser.print_help()

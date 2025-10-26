@@ -40,6 +40,8 @@ class Settings:
     default_keyword: str = os.getenv("SCRAPE_KEYWORD", "")
     scrape_limit: int = int(os.getenv("SCRAPE_LIMIT", "100"))
     min_probability: float = float(os.getenv("MIN_PROBABILITY", "0.05"))
+
+    # Twitter API credentials (Twikit manual scraper - main implementation)
     twitter_cookie_header: Optional[str] = os.getenv("TWITTER_COOKIE_HEADER")
     twitter_cookie_file: Optional[str] = os.getenv("TWITTER_COOKIE_FILE")
     twitter_username: Optional[str] = os.getenv("TWITTER_USERNAME")
@@ -49,6 +51,21 @@ class Settings:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     )
     model_cache_dir: Path = data_dir / "model_cache"
+
+    # Twitter API credentials (legacy bearer token - kept for compatibility)
+    twitter_bearer_token: Optional[str] = os.getenv("TWITTER_BEARER_TOKEN")
+    twitter_app_user_agent: str = os.getenv(
+        "TWITTER_APP_USER_AGENT",
+        "SentimentEventBackend/1.0",
+    )
+
+    # Reddit API credentials (alternative source)
+    reddit_client_id: Optional[str] = os.getenv("REDDIT_CLIENT_ID")
+    reddit_client_secret: Optional[str] = os.getenv("REDDIT_CLIENT_SECRET")
+    reddit_user_agent: str = os.getenv(
+        "REDDIT_USER_AGENT",
+        "SentimentEventBackend/1.0 (by /u/YourUsername)",
+    )
 
     @property
     def sqlite_path(self) -> Path:
