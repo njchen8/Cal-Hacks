@@ -41,6 +41,7 @@ build/
 sentiment-event/backend/data/
 sentiment-event/backend/sentiment_report.txt
 sentiment-event/backend/sentiment_report.csv
+sentiment-event/backend/reports/
 
 # Misc
 *.log
