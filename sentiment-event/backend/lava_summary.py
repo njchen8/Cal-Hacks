@@ -173,12 +173,32 @@ class LavaGatewaySummarizer:
         negative_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEGATIVE'][:5]
         neutral_samples = [p['content'][:300] for p in posts if p.get('sentiment_label') == 'NEUTRAL'][:5]
 
+        # Format emotion scores with exact values
+        positive_emotions_text = '\n'.join(
+            f"  - **{emotion.capitalize()}**: {score:.2f}"
+            for emotion, score in stats['top_emotions_positive'].items()
+        )
+        negative_emotions_text = '\n'.join(
+            f"  - **{emotion.capitalize()}**: {score:.2f}"
+            for emotion, score in stats['top_emotions_negative'].items()
+        )
+
         prompt = f"""You are a data storyteller creating an engaging, scannable sentiment report.
 
 **DATA CONTEXT:**
 Topic: {stats['keyword']} | Source: {stats['source']} | Posts: {stats['total_posts']}
-Sentiment: {stats['sentiment_percentages'].get('POSITIVE', 0):.0f}% positive, {stats['sentiment_percentages'].get('NEGATIVE', 0):.0f}% negative, {stats['sentiment_percentages'].get('NEUTRAL', 0):.0f}% neutral
-Top Emotions: {', '.join(list(stats['top_emotions_positive'].keys())[:3])} (positive) | {', '.join(list(stats['top_emotions_negative'].keys())[:3])} (negative)
+
+Sentiment Distribution:
+- Positive: {stats['sentiment_percentages'].get('POSITIVE', 0):.1f}% ({stats['sentiment_counts'].get('POSITIVE', 0)} posts)
+- Negative: {stats['sentiment_percentages'].get('NEGATIVE', 0):.1f}% ({stats['sentiment_counts'].get('NEGATIVE', 0)} posts)
+- Neutral: {stats['sentiment_percentages'].get('NEUTRAL', 0):.1f}% ({stats['sentiment_counts'].get('NEUTRAL', 0)} posts)
+
+Emotion Scores (0.00 to 1.00 scale):
+Positive Emotions:
+{positive_emotions_text}
+
+Negative Emotions:
+{negative_emotions_text}
 
 Sample posts:
 Positive: {positive_samples[0] if positive_samples else 'N/A'}
@@ -198,19 +218,35 @@ Write a concise, beautifully formatted sentiment report using proper Markdown. U
 
 **STRUCTURE:**
 
-## 📊 Sentiment Overview
+## Sentiment Overview
 [2-3 sentences max. State the dominant sentiment, key percentage, and one interesting insight]
 
-## 💬 What People Are Saying
+## Emotion Breakdown
+REQUIRED: Include the exact emotion scores from the data above. Format like this:
+
+**Positive Emotions:**
+- Joy: [value]
+- Trust: [value]
+- Desire: [value]
+- Anticipation: [value]
+
+**Negative Emotions:**
+- Anger: [value]
+- Fear: [value]
+- Greed: [value]
+
+[1-2 sentences explaining what these emotion patterns reveal about user sentiment]
+
+## What People Are Saying
 [3-4 SHORT paragraphs. Each covers ONE specific theme. Use **bold** for theme names. Be concrete with examples from the data.]
 
-## ✨ Positive Highlights
+## Positive Highlights
 [2-3 sentences. What do users love? Be specific. Use **bold** for key positive aspects.]
 
-## ⚠️ Concerns & Critiques
+## Concerns & Critiques
 [2-3 sentences. What are the main complaints? Be direct. Use **bold** for key issues.]
 
-## 🎯 Key Insights
+## Key Insights
 [Exactly 3 bullet points. Each bullet is ONE sentence. Start with action verbs. Make them actionable.]
 
 **STYLE GUIDE:**
@@ -220,6 +256,7 @@ Write a concise, beautifully formatted sentiment report using proper Markdown. U
 - Instead: Use active voice and direct statements
 - Use specific numbers from the data provided
 - Make it scannable and visually clean
+- DO NOT use emojis in the output - use clean text headers only
 
 Begin writing now. Use proper Markdown formatting."""
 
