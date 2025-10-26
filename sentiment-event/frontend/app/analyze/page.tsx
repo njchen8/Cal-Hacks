@@ -256,29 +256,16 @@ export default function AnalyzePage() {
         </form>
 
         {isLoading && !error && (
-          <div className="status-banner info fade-up" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <div
-              style={{
-                width: "100%",
-                height: "8px",
-                backgroundColor: "var(--surface-muted)",
-                borderRadius: "999px",
-                overflow: "hidden",
-              }}
-            >
+          <div className="status-banner info fade-up">
+            <div className="progress-bar">
               <div
-                className="loading-bar-fill"
-                style={{
-                  width: `${(progressStep / totalSteps) * 100}%`,
-                  height: "100%",
-                  background: "linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%)",
-                  transition: "width 0.3s ease",
-                }}
+                className="progress-bar__fill"
+                style={{ width: `${Math.min((progressStep / totalSteps) * 100, 100)}%` }}
               />
+              <span className="progress-bar__label">
+                {progressStep}/{totalSteps} complete
+              </span>
             </div>
-            <span>
-              {progressStep}/{totalSteps} complete
-            </span>
           </div>
         )}
 
@@ -361,6 +348,34 @@ export default function AnalyzePage() {
           font-size: 0.85rem;
           color: var(--color-text-secondary);
           margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+          position: relative;
+          width: 100%;
+          height: 16px;
+          border-radius: 999px;
+          background: linear-gradient(120deg, rgba(79, 134, 247, 0.14), rgba(201, 160, 220, 0.18));
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .progress-bar__fill {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+          transform-origin: left;
+          transition: width 0.35s ease;
+        }
+
+        .progress-bar__label {
+          position: relative;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text-primary);
+          text-align: center;
         }
       `}</style>
       </section>
