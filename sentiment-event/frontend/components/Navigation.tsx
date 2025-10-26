@@ -18,8 +18,8 @@ export default function Navigation() {
     <header className="navbar">
       <div className="navbar-inner">
         <Link href="/" className="brand">
-          <Image src="/logo.png" alt="blueberri logo" width={48} height={48} style={{ marginRight: '0.5rem' }} />
-          blueberri
+          <Image src="/logo.png" alt="bluberri logo" width={48} height={48} style={{ marginRight: '0.5rem' }} />
+          bluberri
         </Link>
         <nav className="nav-links">
           {links.map((link) => (

@@ -41,7 +41,7 @@ export default function HomePage() {
         <div className="hero-copy">
           <h1 className="hero-title fade-up">Understand what people really think</h1>
           <p className="fade-up delay-1">
-            blueberri analyzes social media conversations to reveal authentic sentiment and emotions.
+            bluberri analyzes social media conversations to reveal authentic sentiment and emotions.
             Perfect for students, researchers, educators, businesses, and anyone curious about public opinion.
           </p>
           <div className="hero-actions fade-up delay-2">

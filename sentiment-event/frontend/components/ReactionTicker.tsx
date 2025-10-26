@@ -12,22 +12,22 @@ type Reaction = {
 const reactions: Reaction[] = [
   {
     quote: "Multi-platform sentiment analysis across Twitter, Reddit, and Facebook in real-time.",
-    product: "blueberri",
+    product: "bluberri",
     source: "Social Media Intelligence",
   },
   {
     quote: "AI-powered emotion detection reveals joy, trust, desire, anger, and concern in every conversation.",
-    product: "blueberri",
+    product: "bluberri",
     source: "Gemini AI Integration",
   },
   {
     quote: "Perfect for students, teachers, researchers analyzing public opinion and social trends.",
-    product: "blueberri",
+    product: "bluberri",
     source: "Educational & Research Tool",
   },
   {
     quote: "Export detailed CSV reports with full sentiment scores and metadata for deeper analysis.",
-    product: "blueberri",
+    product: "bluberri",
     source: "Data Export & Insights",
   },
 ];

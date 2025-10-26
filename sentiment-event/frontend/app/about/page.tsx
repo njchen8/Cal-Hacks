@@ -38,17 +38,17 @@ export default function AboutPage() {
     <div className="page">
       <section className="analysis-panel">
         <header>
-          <h1 className="section-heading hero-title fade-up">About blueberri</h1>
+          <h1 className="section-heading hero-title fade-up">About bluberri</h1>
           <p className="section-subtitle fade-up delay-1">
-            blueberri is a sentiment analysis platform that helps you understand what people really think about any topic.
+            bluberri is a sentiment analysis platform that helps you understand what people really think about any topic.
             Built at Cal Hacks, it combines social media data from multiple platforms with AI-powered analysis to reveal
             authentic public sentiment and emotions. Whether you're a student, researcher, educator, or business professional,
-            blueberri provides the tools to analyze and understand social media conversations at scale.
+            bluberri provides the tools to analyze and understand social media conversations at scale.
           </p>
         </header>
 
         <h2 className="section-heading fade-up" style={{ marginTop: "3rem", fontSize: "1.8rem" }}>
-          What makes blueberri different
+          What makes bluberri different
         </h2>
 
         <div className="feature-grid">
